@@ -1,18 +1,5 @@
 from itertools import islice
-from PIL import Image, ImageFont, ImageDraw
 import numpy as np
-
-
-def write(text, font= ImageFont.truetype('../data/NotoSansMono-Regular.ttf', 20), height= 27, width= 12):
-    if isinstance(text, str): text = text.split("\n")
-    lengths = np.fromiter(map(len, text), np.int32, len(text))
-    nrows = lengths.size * height
-    ncols = lengths.max() * width
-    image = Image.new('L', (ncols, nrows))
-    draw = ImageDraw.Draw(image)
-    for row, line in enumerate(text):
-        draw.text((0, row * height), line, fill= 255, font= font)
-    return np.array(image.getdata(), dtype= np.uint8).reshape(nrows, ncols), lengths
 
 
 def vpack(arrays, shape, fill, dtype= None):
