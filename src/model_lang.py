@@ -31,7 +31,7 @@ def model(mode
         # tgt_idx = tgt_idx[:max_tgt]
         fire = self.fire = tf.pad(tgt_img, ((1,0),(0,0),(0,0)))
         true = self.true = tf.pad(tgt_img, ((0,1),(0,0),(0,0)))
-        tidx = self.tidx = tf.pad(tgt_idx, ((0,1),(0,0),(0,0)), constant_values= 1)
+        tidx = self.tidx = tf.pad(tgt_idx, ((0,1),(0,0)), constant_values= 1)
         mask_tgt = self.mask_tgt = tf.sequence_mask(1+len_tgt, 1+max_tgt)
 
     with scope('decode'):
@@ -93,7 +93,7 @@ if '__main__' == __name__:
         for bat in batch_sample(len(tgt), size, seed):
             yield cwt(tgt[bat])
 
-    tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32), prefetch= 16)
+    tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.int32), prefetch= 16)
     train = model('train', cwt.nchars(), cwt.width, cwt.height, tgt_img, tgt_idx, len_tgt)
     valid = model('valid', cwt.nchars(), cwt.width, cwt.height)
     dummy = tuple(placeholder(tf.float32, ()) for _ in range(4))
@@ -105,7 +105,7 @@ if '__main__' == __name__:
                  , tf.summary.scalar('step_sse', dummy[1])
                  , tf.summary.scalar('step_xmg', dummy[2])
                  , tf.summary.scalar('step_xid', dummy[3])))
-            , fet= (valid.sae, valid.sse, valid.xmg, valid,xid)
+            , fet= (valid.sae, valid.sse, valid.xmg, valid.xid)
             , inp= (valid.tgt_img, valid.tgt_idx, valid.len_tgt)
             , tgt= tgt_valid
             , cwt= cwt
