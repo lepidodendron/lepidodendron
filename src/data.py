@@ -29,11 +29,11 @@ del src_tgt
 # save data #
 #############
 
-cw_src = CharWright.new(chars(src))
-cw_tgt = CharWright.new(chars(tgt))
+cws = CharWright.new(chars(src))
+cwt = CharWright.new(chars(tgt))
 
-cw_src.save("../data/cw_src.pkl")
-cw_tgt.save("../data/cw_tgt.pkl")
+cws.save("../data/cws.pkl")
+cwt.save("../data/cwt.pkl")
 
 save_txt("../data/src.txt", src)
 save_txt("../data/tgt.txt", tgt)

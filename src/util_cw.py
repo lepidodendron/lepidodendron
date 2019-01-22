@@ -2,17 +2,19 @@ from PIL import Image, ImageFont, ImageDraw
 from collections import Counter
 from util import Record
 from util_io import load_txt, load_pkl, save_pkl
-from util_np import np
+from util_np import np, vpack
 
 
 def chars(lines, coverage= 0.9995):
     char2freq = Counter(char for line in lines for char in line)
-    chars = []
-    cover, total = 0, sum(char2freq.values())
+    total = sum(char2freq.values())
+    cover = char2freq[" "]
+    del char2freq[" "]
+    chars = [" "]
     for char, freq in char2freq.most_common():
-        cover += freq
         if coverage <= (cover / total): break
         chars.append(char)
+        cover += freq
     return "".join(chars)
 
 
@@ -60,11 +62,27 @@ class CharWright(Record):
                 image.append(imag)
         return np.stack(image, axis= 1)
 
-    def write(self, lines):
-        images = tuple(map(self.write1, lines))
-        length = np.array([image.shape[1] for image in images])
-        packed = np.stack([np.pad(i, ((0,0),(0,p),(0,0)), 'constant') for i, p in zip(images, length.max() - length)])
-        return packed, length
+    def write(self, lines, maxlen):
+        images = [self.write1(line[:maxlen]) for line in lines]
+        return np.stack([np.pad(htw, ((0,0),(0,maxlen-htw.shape[1]),(0,0)), 'constant') for htw in images])
+
+    def index1(self, line):
+        # index = rank + 1
+        # index 0 (rank -1) is reserved for unknown char
+        return 1 + np.array([self.char2rank.get(char, -1) for char in line], np.int32)
+
+    def index(self, lines, maxlen):
+        # index 1 (rank 0) aka the whitespace is used for padding
+        indexs = [self.index1(line[:maxlen]) for line in lines]
+        return vpack(indexs, (len(indexs), maxlen), 1, np.int32)
+
+    def __call__(self, lines):
+        length = np.fromiter(map(len, lines), np.int32, len(lines))
+        maxlen = length.max()
+        return self.write(lines, maxlen), self.index(lines, maxlen), length
+
+    def nchars(self):
+        return 1 + len(self.chars)
 
 
 # import matplotlib.pyplot as plt
