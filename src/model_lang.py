@@ -11,7 +11,7 @@ def model(mode
           , num_units= 512
           , learn_rate= 1e-3
           , decay_rate= 1e-2
-          , dropout= 0.0):
+          , dropout= 0.1):
     assert mode in ('train', 'valid', 'infer')
     self = Record()
 
