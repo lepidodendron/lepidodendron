@@ -105,7 +105,7 @@ if '__main__' == __name__:
                  , tf.summary.scalar('step_sse', dummy[1])
                  , tf.summary.scalar('step_xmg', dummy[2])
                  , tf.summary.scalar('step_xid', dummy[3])
-                 , tf.summary.scalar('step_err', dummy[3])))
+                 , tf.summary.scalar('step_err', dummy[4])))
             , fet= (valid.sae, valid.sse, valid.xmg, valid.xid, valid.err)
             , inp= (valid.tgt_img, valid.tgt_idx, valid.len_tgt)
             , tgt= tgt_valid
