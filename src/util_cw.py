@@ -55,6 +55,7 @@ class CharWright(Record):
                 imag = self.char2imag[char]
             except KeyError:
                 imag = write(char, self.font, self.width, self.height, self.offset)
+                self.char2imag[char] = imag
             finally:
                 image.append(imag)
         return np.stack(image, axis= 1)
@@ -62,8 +63,8 @@ class CharWright(Record):
     def write(self, lines):
         images = tuple(map(self.write1, lines))
         length = np.array([image.shape[1] for image in images])
-        length = length.max() - length
-        return np.stack([np.pad(i, ((0,0),(0,l),(0,0)), 'constant') for i, l in zip(images, length)])
+        packed = np.stack([np.pad(i, ((0,0),(0,p),(0,0)), 'constant') for i, p in zip(images, length.max() - length)])
+        return packed, length
 
 
 # import matplotlib.pyplot as plt
