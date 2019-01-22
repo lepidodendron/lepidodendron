@@ -96,7 +96,7 @@ if '__main__' == __name__:
     tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.int32), prefetch= 16)
     train = model('train', cwt.nchars(), cwt.width, cwt.height, tgt_img, tgt_idx, len_tgt)
     valid = model('valid', cwt.nchars(), cwt.width, cwt.height)
-    dummy = tuple(placeholder(tf.float32, ()) for _ in range(4))
+    dummy = tuple(placeholder(tf.float32, ()) for _ in range(5))
 
     def log(step
             , wtr= tf.summary.FileWriter("/cache/tensorboard-logdir/lepidodendron/l")
@@ -104,8 +104,9 @@ if '__main__' == __name__:
                 (  tf.summary.scalar('step_sae', dummy[0])
                  , tf.summary.scalar('step_sse', dummy[1])
                  , tf.summary.scalar('step_xmg', dummy[2])
-                 , tf.summary.scalar('step_xid', dummy[3])))
-            , fet= (valid.sae, valid.sse, valid.xmg, valid.xid)
+                 , tf.summary.scalar('step_xid', dummy[3])
+                 , tf.summary.scalar('step_err', dummy[3])))
+            , fet= (valid.sae, valid.sse, valid.xmg, valid.xid, valid.err)
             , inp= (valid.tgt_img, valid.tgt_idx, valid.len_tgt)
             , tgt= tgt_valid
             , cwt= cwt
@@ -119,9 +120,9 @@ if '__main__' == __name__:
     tf.global_variables_initializer().run()
     # saver.restore(sess, "../ckpt/l9")
 
-    for r in range(10):
-        for _ in range(100): # 10k steps per round
-            for _ in tqdm(range(100), ncols= 70):
+    for r in range(37):
+        for _ in range(40): # 10k steps per round
+            for _ in tqdm(range(250), ncols= 70):
                 sess.run(train.down)
             log(sess.run(train.step))
         saver.save(sess, "../ckpt/l{}".format(r), write_meta_graph= False)
