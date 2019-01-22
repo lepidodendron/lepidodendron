@@ -40,8 +40,9 @@ def model(mode
         y = tf.boolean_mask(y, mask_tgt)
         true = tf.boolean_mask(true, mask_tgt)
 
-    y = tf.layers.dense(y, height * width, name= 'logits')
-    pred = self.pred = tf.sigmoid(y)
+    with scope('output'):
+        y = tf.layers.dense(y, height * width, name= 'logits')
+        pred = self.pred = tf.sigmoid(y)
 
     with scope('losses'):
         diff = true - pred
@@ -67,6 +68,10 @@ def model(mode
 
 if '__main__' == __name__:
 
+    # import os
+    # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+
+    from multiprocessing import Process, Queue
     from tqdm import tqdm
     from util_io import load_txt
     from util_np import np, write, batch_sample, partition
@@ -75,10 +80,26 @@ if '__main__' == __name__:
     tf.set_random_seed(0)
     sess = tf.InteractiveSession()
 
-    def batch(path= "../data/train_tgt.txt", size= 64, len_cap= 256, seed= 0):
-        raw = np.array([sent for sent in load_txt(path) if len(sent) <= len_cap]) # 1675579
-        for bat in batch_sample(len(raw), size, seed):
-            yield write(raw[bat])
+    def batch(path= "../data/train_tgt.txt", size= 256, len_cap= 256, seed= 0):
+        corpus = np.array([sent for sent in load_txt(path) if len(sent) <= len_cap]) # 1675579
+        q_fork = Queue(999)
+        q_join = Queue(999)
+
+        def f_fork():
+            for ids in batch_sample(len(corpus), size, seed):
+                q_fork.put(ids)
+
+        Process(target= f_fork).start()
+
+        def f_join():
+            while True:
+                q_join.put(write(corpus[q_fork.get()]))
+
+        for _ in range(15):
+            Process(target= f_join).start()
+
+        while True:
+            yield q_join.get()
 
     tgt, len_tgt = pipe(batch, (tf.uint8, tf.int32), prefetch= 16)
     model_train = model('train', tgt= tgt, len_tgt= len_tgt)
@@ -94,7 +115,7 @@ if '__main__' == __name__:
                  , tf.summary.scalar('step_xent', dummy[2])))
             , input= (model_valid.tgt, model_valid.len_tgt)
             , fetch= (model_valid.sae, model_valid.sse, model_valid.xent)
-            , batch= 256):
+            , batch= 512):
         stats = [sess.run(fetch, dict(zip(input, write(valid[i:j])))) for i, j in partition(len(valid), batch)]
         stats = [np.mean(np.concatenate(stat)) for stat in zip(*stats)]
         wtr.add_summary(sess.run(log, dict(zip(dummy, stats))), step)
@@ -108,5 +129,5 @@ if '__main__' == __name__:
         for _ in range(100): # 10k steps per round
             for _ in tqdm(range(100), ncols= 70):
                 sess.run(model_train.down)
-            log(sess.run(model.train.step))
+            log(sess.run(model_train.step))
         saver.save(sess, "../ckpt/l{}".format(r), write_meta_graph= False)

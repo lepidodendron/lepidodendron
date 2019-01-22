@@ -3,7 +3,7 @@ from PIL import Image, ImageFont, ImageDraw
 import numpy as np
 
 
-def write(text, font= ImageFont.truetype('NotoSansMono-Regular.ttf', 20), height= 27, width= 12):
+def write(text, font= ImageFont.truetype('../data/NotoSansMono-Regular.ttf', 20), height= 27, width= 12):
     if isinstance(text, str): text = text.split("\n")
     lengths = np.fromiter(map(len, text), np.int32, len(text))
     nrows = lengths.size * height
