@@ -93,7 +93,7 @@ if '__main__' == __name__:
         for bat in batch_sample(len(tgt), size, seed):
             yield cwt(tgt[bat])
 
-    tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.int32), prefetch= 16)
+    tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.int32))
     train = model('train', cwt.nchars(), cwt.width, cwt.height, tgt_img, tgt_idx, len_tgt)
     valid = model('valid', cwt.nchars(), cwt.width, cwt.height)
     dummy = tuple(placeholder(tf.float32, ()) for _ in range(5))

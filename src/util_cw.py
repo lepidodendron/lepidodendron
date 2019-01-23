@@ -57,7 +57,6 @@ class CharWright(Record):
                 imag = self.char2imag[char]
             except KeyError:
                 imag = write(char, self.font, self.width, self.height, self.offset)
-                self.char2imag[char] = imag
             finally:
                 image.append(imag)
         return np.stack(image, axis= 1)
