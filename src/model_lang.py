@@ -1,5 +1,5 @@
 from util import Record
-from util_tf import tf, scope, placeholder
+from util_tf import tf, scope, placeholder, flatten
 
 
 def model(mode
@@ -18,23 +18,28 @@ def model(mode
     self = Record()
 
     with scope('target'):
+        # input nodes
         tgt_img = self.tgt_img = placeholder(tf.uint8, (None, height, None, width), tgt_img, 'tgt_img') # n h t w
         tgt_idx = self.tgt_idx = placeholder(tf.int32, (None, None), tgt_idx, 'tgt_idx') # n t
         len_tgt = self.len_tgt = placeholder(tf.int32, (None,), len_tgt, 'len_tgt') # n
-        max_tgt = self.max_tgt = tf.reduce_max(len_tgt)
+
+        # time major order
         tgt_idx = tf.transpose(tgt_idx) # t n
         tgt_img = tf.transpose(tgt_img, (2, 0, 1, 3)) # t n h w
-        tgt_img = tf.reshape(tgt_img, (max_tgt, -1, height * width)) # t n hw
+        tgt_img = flatten(tgt_img, 2, 3) # t n hw
+
+        # normalize pixels to binary
         tgt_img = tf.to_float(tgt_img) / 255.0
         # tgt_img = tf.round(tgt_img)
-        # tgt_img = tgt_img[:max_tgt]
-        # tgt_idx = tgt_idx[:max_tgt]
-        len_tgt += 1
-        max_tgt += 1
+        # todo consider adding noise
+
+        # causal padding
         fire = self.fire = tf.pad(tgt_img, ((1,0),(0,0),(0,0)))
         true = self.true = tf.pad(tgt_img, ((0,1),(0,0),(0,0)))
         tidx = self.tidx = tf.pad(tgt_idx, ((0,1),(0,0)), constant_values= 1)
-        mask_tgt = self.mask_tgt = tf.sequence_mask(len_tgt, max_tgt)
+        len_tgt += 1
+        max_tgt = tf.reduce_max(len_tgt) # todo make sure this is t
+        mask_tgt = tf.transpose(tf.sequence_mask(len_tgt, max_tgt)) # t n
 
     with scope('decode'):
         decoder  = self.decoder  = tf.contrib.cudnn_rnn.CudnnGRU(num_layers, num_units, dropout= dropout)
@@ -50,7 +55,7 @@ def model(mode
 
     with scope('output'):
         y = tf.layers.dense(x, height * width, name= 'logit_img')
-        z = tf.layers.dense(y, nchars        , name= 'logit_idx') # todo x or y
+        z = tf.layers.dense(x, nchars        , name= 'logit_idx') # todo x or y or pred
         pred = self.pred = tf.sigmoid(y)
         prob = self.prob = tf.nn.softmax(z)
         pidx = self.pidx = tf.argmax(z, axis= -1, output_type= tf.int32)

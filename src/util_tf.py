@@ -56,3 +56,29 @@ def get_shape(x, name= 'shape'):
         shape = tf.shape(x)
         shape = tuple(d if d is not None else shape[i] for i, d in enumerate(x.shape.as_list()))
         return shape
+
+
+def flatten(x, *axes, name= 'flatten'):
+    with scope(name):
+        dims = get_shape(x)
+        z = len(dims)
+        for a in axes:
+            if a < -z or z <= a:
+                raise ValueError("axis {} out of rank {}".format(a, z))
+        axes = {(a + z) % z for a in axes}
+        if not axes: axes = set(range(z))
+        shape, n = [], None
+        for a, d in enumerate(dims):
+            if a in axes:
+                if n is None:
+                    n = d
+                else:
+                    n *= d
+            else:
+                if n is not None:
+                    shape.append(n)
+                    n = None
+                shape.append(d)
+        if n is not None:
+            shape.append(n)
+        return tf.reshape(x, shape)
