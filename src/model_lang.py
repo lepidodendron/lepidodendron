@@ -26,6 +26,7 @@ def model(mode
         tgt_img = tf.transpose(tgt_img, (2, 0, 1, 3)) # t n h w
         tgt_img = tf.reshape(tgt_img, (max_tgt, -1, height * width)) # t n hw
         tgt_img = tf.to_float(tgt_img) / 255.0
+        # tgt_img = tf.round(tgt_img)
         # tgt_img = tgt_img[:max_tgt]
         # tgt_idx = tgt_idx[:max_tgt]
         len_tgt += 1
@@ -38,30 +39,30 @@ def model(mode
     with scope('decode'):
         decoder  = self.decoder  = tf.contrib.cudnn_rnn.CudnnGRU(num_layers, num_units, dropout= dropout)
         state_in = self.state_in = tf.zeros((num_layers, tf.shape(fire)[1], num_units))
-        y, _ = _, (self.state_ex,) = decoder(fire, initial_state= (state_in,), training= 'train' == mode)
+        x, _ = _, (self.state_ex,) = decoder(fire, initial_state= (state_in,), training= 'train' == mode)
 
-    # todo predict when to stop based on y and mask_tgt
+    # todo predict when to stop based on x and mask_tgt
 
     if 'infer' != mode:
-        y = tf.boolean_mask(y, mask_tgt)
+        x    = tf.boolean_mask(x   , mask_tgt)
         true = tf.boolean_mask(true, mask_tgt)
         tidx = tf.boolean_mask(tidx, mask_tgt)
 
     with scope('output'):
-        y = tf.layers.dense(y, height * width, name= 'logits_img')
+        y = tf.layers.dense(x, height * width, name= 'logits_img')
+        z = tf.layers.dense(y, nchars        , name= 'logit_idx') # todo x or y
         pred = self.pred = tf.sigmoid(y)
-        z = tf.layers.dense(pred, nchars, name= 'logit_idx')
-        pidx = self.pidx = tf.argmax(z, axis= -1, output_type= tf.int32)
         prob = self.prob = tf.nn.softmax(z)
+        pidx = self.pidx = tf.argmax(z, axis= -1, output_type= tf.int32)
 
     with scope('losses'):
-        diff = true - pred
-        sae = self.sae = tf.reduce_sum(tf.abs(diff), axis= -1)
-        sse = self.sse = tf.reduce_sum(tf.square(diff), axis= -1)
-        xmg = self.xmg = tf.reduce_sum(tf.nn.sigmoid_cross_entropy_with_logits(logits= y, labels= true), axis= -1)
+        # diff = true - pred
+        # mae = self.mae = tf.reduce_mean(tf.abs(diff), axis= -1)
+        # mse = self.mse = tf.reduce_mean(tf.square(diff), axis= -1)
+        xmg = self.xmg = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits= y, labels= true), axis= -1)
         xid = self.xid = tf.nn.sparse_softmax_cross_entropy_with_logits(logits= z, labels= tidx)
         err = self.err = tf.not_equal(tidx, pidx)
-        loss = tf.reduce_mean(xid) + tf.reduce_mean(xmg) # todo try other losses
+        loss = tf.reduce_mean(xid) + tf.reduce_mean(xmg)
 
     with scope('update'):
         step = self.step = tf.train.get_or_create_global_step()
@@ -74,8 +75,8 @@ def model(mode
 
 if '__main__' == __name__:
 
-    # import os
-    # os.environ['CUDA_VISIBLE_DEVICES'] = '1'
+    trial = 'lang'
+    ckpt  =  None
 
     from tqdm import tqdm
     from util_cw import CharWright
@@ -98,17 +99,15 @@ if '__main__' == __name__:
     tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.int32))
     train = model('train', cwt.nchars(), cwt.width, cwt.height, tgt_img, tgt_idx, len_tgt)
     valid = model('valid', cwt.nchars(), cwt.width, cwt.height)
-    dummy = tuple(placeholder(tf.float32, ()) for _ in range(5))
+    dummy = tuple(placeholder(tf.float32, ()) for _ in range(3))
 
     def log(step
-            , wtr= tf.summary.FileWriter("/cache/tensorboard-logdir/lepidodendron/l")
+            , wtr= tf.summary.FileWriter("/cache/tensorboard-logdir/lepidodendron/{}".format(trial))
             , log= tf.summary.merge(
-                (  tf.summary.scalar('step_sae', dummy[0])
-                 , tf.summary.scalar('step_sse', dummy[1])
-                 , tf.summary.scalar('step_xmg', dummy[2])
-                 , tf.summary.scalar('step_xid', dummy[3])
-                 , tf.summary.scalar('step_err', dummy[4])))
-            , fet= (valid.sae, valid.sse, valid.xmg, valid.xid, valid.err)
+                (  tf.summary.scalar('step_xmg', dummy[0])
+                 , tf.summary.scalar('step_xid', dummy[1])
+                 , tf.summary.scalar('step_err', dummy[2])))
+            , fet= (valid.xmg    , valid.xid    , valid.err    )
             , inp= (valid.tgt_img, valid.tgt_idx, valid.len_tgt)
             , tgt= tgt_valid
             , cwt= cwt
@@ -119,12 +118,14 @@ if '__main__' == __name__:
         wtr.flush()
 
     saver = tf.train.Saver()
-    tf.global_variables_initializer().run()
-    # saver.restore(sess, "../ckpt/l9")
+    if ckpt is not None:
+        saver.restore(sess, "../ckpt/{}_{}".format(trial, ckpt))
+    else:
+        tf.global_variables_initializer().run()
 
-    for r in range(37):
+    for ckpt in range(37):
         for _ in range(40): # 10k steps per round
             for _ in tqdm(range(250), ncols= 70):
                 sess.run(train.down)
             log(sess.run(train.step))
-        saver.save(sess, "../ckpt/l{}".format(r), write_meta_graph= False)
+        saver.save(sess, "../ckpt/{}_{}".format(trial, ckpt), write_meta_graph= False)
