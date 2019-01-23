@@ -22,21 +22,22 @@ def model(mode
         tgt_idx = self.tgt_idx = placeholder(tf.int32, (None, None), tgt_idx, 'tgt_idx') # n t
         len_tgt = self.len_tgt = placeholder(tf.int32, (None,), len_tgt, 'len_tgt') # n
         max_tgt = self.max_tgt = tf.reduce_max(len_tgt)
-        num_tgt = tf.size(len_tgt)
         tgt_idx = tf.transpose(tgt_idx) # t n
         tgt_img = tf.transpose(tgt_img, (2, 0, 1, 3)) # t n h w
-        tgt_img = tf.reshape(tgt_img, (max_tgt, num_tgt, height * width)) # t n hw
+        tgt_img = tf.reshape(tgt_img, (max_tgt, -1, height * width)) # t n hw
         tgt_img = tf.to_float(tgt_img) / 255.0
         # tgt_img = tgt_img[:max_tgt]
         # tgt_idx = tgt_idx[:max_tgt]
+        len_tgt += 1
+        max_tgt += 1
         fire = self.fire = tf.pad(tgt_img, ((1,0),(0,0),(0,0)))
         true = self.true = tf.pad(tgt_img, ((0,1),(0,0),(0,0)))
         tidx = self.tidx = tf.pad(tgt_idx, ((0,1),(0,0)), constant_values= 1)
-        mask_tgt = self.mask_tgt = tf.sequence_mask(1+len_tgt, 1+max_tgt)
+        mask_tgt = self.mask_tgt = tf.sequence_mask(len_tgt, max_tgt)
 
     with scope('decode'):
         decoder  = self.decoder  = tf.contrib.cudnn_rnn.CudnnGRU(num_layers, num_units, dropout= dropout)
-        state_in = self.state_in = tf.zeros((num_layers, num_tgt, num_units))
+        state_in = self.state_in = tf.zeros((num_layers, tf.shape(fire)[1], num_units))
         y, _ = _, (self.state_ex,) = decoder(fire, initial_state= (state_in,), training= 'train' == mode)
 
     # todo predict when to stop based on y and mask_tgt
@@ -51,6 +52,7 @@ def model(mode
         pred = self.pred = tf.sigmoid(y)
         z = tf.layers.dense(pred, nchars, name= 'logit_idx')
         pidx = self.pidx = tf.argmax(z, axis= -1, output_type= tf.int32)
+        prob = self.prob = tf.nn.softmax(z)
 
     with scope('losses'):
         diff = true - pred

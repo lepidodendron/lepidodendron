@@ -83,6 +83,21 @@ class CharWright(Record):
     def nchars(self):
         return 1 + len(self.chars)
 
+    def tostr1(self, idx):
+        chars = []
+        for i in idx-1:
+            try:
+                char = self.chars[i]
+            except IndexError:
+                char = "�"
+            finally:
+                chars.append(char)
+        return "".join(chars)
+
+    def tostr(self, idxs):
+        for idx in idxs:
+            yield self.tostr1(idx)
+
 
 # import matplotlib.pyplot as plt
 # def plot(x):
