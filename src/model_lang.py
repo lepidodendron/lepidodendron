@@ -49,7 +49,7 @@ def model(mode
         tidx = tf.boolean_mask(tidx, mask_tgt)
 
     with scope('output'):
-        y = tf.layers.dense(x, height * width, name= 'logits_img')
+        y = tf.layers.dense(x, height * width, name= 'logit_img')
         z = tf.layers.dense(y, nchars        , name= 'logit_idx') # todo x or y
         pred = self.pred = tf.sigmoid(y)
         prob = self.prob = tf.nn.softmax(z)
