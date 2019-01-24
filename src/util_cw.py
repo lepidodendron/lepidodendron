@@ -101,7 +101,7 @@ class CharWright(Record):
             elif 1 == i:
                 char = "�"
             else:
-                char = self.chars[r-2]
+                char = self.chars[i-2]
             chars.append(char)
         return "".join(chars)
 
