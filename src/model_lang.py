@@ -52,7 +52,7 @@ def model(mode
     with scope('output'):
         y = tf.layers.dense(x, height * width, name= 'logit_img')
         z = tf.layers.dense(x, nchars        , name= 'logit_idx')
-        pred = self.pred = tf.sigmoid(y) # todo try regression
+        pred = self.pred = tf.clip_by_value(y, 0.0, 1.0)
         prob = self.prob = tf.nn.softmax(z)
         pidx = self.pidx = tf.argmax(z, axis= -1, output_type= tf.int32)
 
@@ -60,10 +60,9 @@ def model(mode
         diff = true - pred
         mae = self.mae = tf.reduce_mean(tf.abs(diff), axis= -1)
         mse = self.mse = tf.reduce_mean(tf.square(diff), axis= -1)
-        xmg = self.xmg = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits= y, labels= true), axis= -1)
         xid = self.xid = tf.nn.sparse_softmax_cross_entropy_with_logits(logits= z, labels= tidx)
         err = self.err = tf.not_equal(tidx, pidx)
-        loss = tf.reduce_mean(xid) + tf.reduce_mean(xmg)
+        loss = tf.reduce_mean(xid) + tf.reduce_mean(mae)
 
     with scope('update'):
         step = self.step = tf.train.get_or_create_global_step()
@@ -100,17 +99,15 @@ if '__main__' == __name__:
     tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.int32))
     train = model('train', cwt.nchars(), cwt.width, cwt.height, tgt_img, tgt_idx, len_tgt)
     valid = model('valid', cwt.nchars(), cwt.width, cwt.height)
-    dummy = tuple(placeholder(tf.float32, ()) for _ in range(5))
+    dummy = tuple(placeholder(tf.float32, ()) for _ in range(3))
 
     def log(step
             , wtr= tf.summary.FileWriter("/cache/tensorboard-logdir/lepidodendron/{}".format(trial))
             , log= tf.summary.merge(
                 (  tf.summary.scalar('step_mae', dummy[0])
-                 , tf.summary.scalar('step_mse', dummy[1])
-                 , tf.summary.scalar('step_xmg', dummy[2])
-                 , tf.summary.scalar('step_xid', dummy[3])
-                 , tf.summary.scalar('step_err', dummy[4])))
-            , fet= (valid.mae, valid.mse, valid.xmg, valid.xid, valid.err)
+                 , tf.summary.scalar('step_xid', dummy[1])
+                 , tf.summary.scalar('step_err', dummy[2])))
+            , fet= (valid.mae, valid.xid, valid.err)
             , inp= (valid.tgt_img, valid.tgt_idx, valid.len_tgt)
             , tgt= tgt_valid
             , cwt= cwt
@@ -126,7 +123,7 @@ if '__main__' == __name__:
     else:
         tf.global_variables_initializer().run()
 
-    for ckpt in range(37):
+    for ckpt in range(37): # 60 epochs
         for _ in range(40): # 10k steps per round
             for _ in tqdm(range(250), ncols= 70):
                 sess.run(train.down)
