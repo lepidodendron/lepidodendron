@@ -6,6 +6,12 @@ from util_np import np, vpack
 
 
 def chars(lines, coverage= 0.9995):
+    """returns a string containing the most frequent types of characters
+    which cover the strings in `lines`, ordered by their ranks.
+
+    rank 0 is rigged to always be the whitespace.
+
+    """
     char2freq = Counter(char for line in lines for char in line)
     total = sum(char2freq.values())
     cover = char2freq[" "]
@@ -62,18 +68,22 @@ class CharWright(Record):
         return np.stack(image, axis= 1)
 
     def write(self, lines, maxlen):
+        # full white for padding
         images = [self.write1(line[:maxlen]) for line in lines]
-        return np.stack([np.pad(htw, ((0,0),(0,maxlen-htw.shape[1]),(0,0)), 'constant') for htw in images])
+        return np.stack(
+            [np.pad(htw, ((0,0),(0,maxlen-htw.shape[1]),(0,0)), 'constant', constant_values= 255)
+             for htw in images])
 
     def index1(self, line):
-        # index = rank + 1
-        # index 0 (rank -1) is reserved for unknown char
-        return 1 + np.array([self.char2rank.get(char, -1) for char in line], np.int32)
+        # index = rank + 2
+        # index 1 (rank -1) is reserved for unknown char
+        # index 0 (rank -2) is reserved for eos padding
+        return 2 + np.array([self.char2rank.get(char, -1) for char in line], np.int32)
 
     def index(self, lines, maxlen):
-        # index 1 (rank 0) aka the whitespace is used for padding
+        # 0 for eos padding
         indexs = [self.index1(line[:maxlen]) for line in lines]
-        return vpack(indexs, (len(indexs), maxlen), 1, np.int32)
+        return vpack(indexs, (len(indexs), maxlen), 0, np.int32)
 
     def __call__(self, lines):
         length = np.fromiter(map(len, lines), np.int32, len(lines))
@@ -81,15 +91,17 @@ class CharWright(Record):
         return self.write(lines, maxlen), self.index(lines, maxlen), length
 
     def nchars(self):
-        return 1 + len(self.chars)
+        return 2 + len(self.chars)
 
     def tostr1(self, idx):
         chars = []
-        for r in idx-1:
-            if 0 <= r:
-                char = self.chars[r]
-            else:
+        for i in idx:
+            if 0 == r:
+                break
+            elif 1 == r:
                 char = "�"
+            else:
+                char = self.chars[r-2]
             chars.append(char)
         return "".join(chars)
 

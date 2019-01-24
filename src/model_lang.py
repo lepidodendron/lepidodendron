@@ -20,8 +20,8 @@ def model(mode
     with scope('target'):
         # input nodes
         tgt_img = self.tgt_img = placeholder(tf.uint8, (None, height, None, width), tgt_img, 'tgt_img') # n h t w
-        tgt_idx = self.tgt_idx = placeholder(tf.int32, (None, None), tgt_idx, 'tgt_idx') # n t
-        len_tgt = self.len_tgt = placeholder(tf.int32, (None,), len_tgt, 'len_tgt') # n
+        tgt_idx = self.tgt_idx = placeholder(tf.int32, (None,         None       ), tgt_idx, 'tgt_idx') # n t
+        len_tgt = self.len_tgt = placeholder(tf.int32, (None,                    ), len_tgt, 'len_tgt') # n
 
         # time major order
         tgt_idx = tf.transpose(tgt_idx) # t n
@@ -34,19 +34,15 @@ def model(mode
         # todo consider adding noise
 
         # causal padding
-        fire = self.fire = tf.pad(tgt_img, ((1,0),(0,0),(0,0)))
-        true = self.true = tf.pad(tgt_img, ((0,1),(0,0),(0,0)))
-        tidx = self.tidx = tf.pad(tgt_idx, ((0,1),(0,0)), constant_values= 1)
-        len_tgt += 1
-        mask_tgt = tf.transpose(tf.sequence_mask(len_tgt)) # t n
+        fire = self.fire = tf.pad(tgt_img, ((1,0),(0,0),(0,0)), constant_values= 0.0)
+        true = self.true = tf.pad(tgt_img, ((0,1),(0,0),(0,0)), constant_values= 1.0)
+        tidx = self.tidx = tf.pad(tgt_idx, ((0,1),(0,0))      , constant_values= 0  )
+        mask_tgt = tf.transpose(tf.sequence_mask(len_tgt + 1)) # t n
 
     with scope('decode'):
         decoder  = self.decoder  = tf.contrib.cudnn_rnn.CudnnGRU(num_layers, num_units, dropout= dropout)
         state_in = self.state_in = tf.zeros((num_layers, tf.shape(fire)[1], num_units))
         x, _ = _, (self.state_ex,) = decoder(fire, initial_state= (state_in,), training= 'train' == mode)
-
-    # todo predict when to stop based on x and mask_tgt
-    # or add a special padding character
 
     if 'infer' != mode:
         x    = tf.boolean_mask(x   , mask_tgt)
@@ -55,15 +51,15 @@ def model(mode
 
     with scope('output'):
         y = tf.layers.dense(x, height * width, name= 'logit_img')
-        z = tf.layers.dense(x, nchars        , name= 'logit_idx') # todo x or y or pred
+        z = tf.layers.dense(x, nchars        , name= 'logit_idx')
         pred = self.pred = tf.sigmoid(y) # todo try regression
         prob = self.prob = tf.nn.softmax(z)
         pidx = self.pidx = tf.argmax(z, axis= -1, output_type= tf.int32)
 
     with scope('losses'):
-        # diff = true - pred
-        # mae = self.mae = tf.reduce_mean(tf.abs(diff), axis= -1)
-        # mse = self.mse = tf.reduce_mean(tf.square(diff), axis= -1)
+        diff = true - pred
+        mae = self.mae = tf.reduce_mean(tf.abs(diff), axis= -1)
+        mse = self.mse = tf.reduce_mean(tf.square(diff), axis= -1)
         xmg = self.xmg = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits= y, labels= true), axis= -1)
         xid = self.xid = tf.nn.sparse_softmax_cross_entropy_with_logits(logits= z, labels= tidx)
         err = self.err = tf.not_equal(tidx, pidx)
@@ -104,15 +100,17 @@ if '__main__' == __name__:
     tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.int32))
     train = model('train', cwt.nchars(), cwt.width, cwt.height, tgt_img, tgt_idx, len_tgt)
     valid = model('valid', cwt.nchars(), cwt.width, cwt.height)
-    dummy = tuple(placeholder(tf.float32, ()) for _ in range(3))
+    dummy = tuple(placeholder(tf.float32, ()) for _ in range(5))
 
     def log(step
             , wtr= tf.summary.FileWriter("/cache/tensorboard-logdir/lepidodendron/{}".format(trial))
             , log= tf.summary.merge(
-                (  tf.summary.scalar('step_xmg', dummy[0])
-                 , tf.summary.scalar('step_xid', dummy[1])
-                 , tf.summary.scalar('step_err', dummy[2])))
-            , fet= (valid.xmg    , valid.xid    , valid.err    )
+                (  tf.summary.scalar('step_mae', dummy[0])
+                 , tf.summary.scalar('step_mse', dummy[1])
+                 , tf.summary.scalar('step_xmg', dummy[2])
+                 , tf.summary.scalar('step_xid', dummy[3])
+                 , tf.summary.scalar('step_err', dummy[4])))
+            , fet= (valid.mae, valid.mse, valid.xmg, valid.xid, valid.err)
             , inp= (valid.tgt_img, valid.tgt_idx, valid.len_tgt)
             , tgt= tgt_valid
             , cwt= cwt
