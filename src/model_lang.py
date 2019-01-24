@@ -38,8 +38,7 @@ def model(mode
         true = self.true = tf.pad(tgt_img, ((0,1),(0,0),(0,0)))
         tidx = self.tidx = tf.pad(tgt_idx, ((0,1),(0,0)), constant_values= 1)
         len_tgt += 1
-        max_tgt = tf.reduce_max(len_tgt) # todo make sure this is t
-        mask_tgt = tf.transpose(tf.sequence_mask(len_tgt, max_tgt)) # t n
+        mask_tgt = tf.transpose(tf.sequence_mask(len_tgt)) # t n
 
     with scope('decode'):
         decoder  = self.decoder  = tf.contrib.cudnn_rnn.CudnnGRU(num_layers, num_units, dropout= dropout)
@@ -47,6 +46,7 @@ def model(mode
         x, _ = _, (self.state_ex,) = decoder(fire, initial_state= (state_in,), training= 'train' == mode)
 
     # todo predict when to stop based on x and mask_tgt
+    # or add a special padding character
 
     if 'infer' != mode:
         x    = tf.boolean_mask(x   , mask_tgt)
@@ -56,7 +56,7 @@ def model(mode
     with scope('output'):
         y = tf.layers.dense(x, height * width, name= 'logit_img')
         z = tf.layers.dense(x, nchars        , name= 'logit_idx') # todo x or y or pred
-        pred = self.pred = tf.sigmoid(y)
+        pred = self.pred = tf.sigmoid(y) # todo try regression
         prob = self.prob = tf.nn.softmax(z)
         pidx = self.pidx = tf.argmax(z, axis= -1, output_type= tf.int32)
 
