@@ -19,13 +19,13 @@ def model(mode
 
     with scope('target'):
         # input nodes
-        tgt_img = self.tgt_img = placeholder(tf.uint8, (None, height, None, width), tgt_img, 'tgt_img') # n h t w
-        tgt_idx = self.tgt_idx = placeholder(tf.int32, (None,         None       ), tgt_idx, 'tgt_idx') # n t
+        tgt_img = self.tgt_img = placeholder(tf.uint8, (None, None, height, width), tgt_img, 'tgt_img') # n t h w
+        tgt_idx = self.tgt_idx = placeholder(tf.int32, (None, None               ), tgt_idx, 'tgt_idx') # n t
         len_tgt = self.len_tgt = placeholder(tf.int32, (None,                    ), len_tgt, 'len_tgt') # n
 
         # time major order
         tgt_idx = tf.transpose(tgt_idx) # t n
-        tgt_img = tf.transpose(tgt_img, (2, 0, 1, 3)) # t n h w
+        tgt_img = tf.transpose(tgt_img, (1, 0, 2, 3)) # t n h w
         tgt_img = flatten(tgt_img, 2, 3) # t n hw
 
         # normalize pixels to binary

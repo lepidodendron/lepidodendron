@@ -30,19 +30,30 @@ def write(char, font, width, height, offset, mode= 'L', fill= 255):
     return np.array(image.getdata(), dtype= np.uint8).reshape(height, width)
 
 
+def pad(lines, char= "█"):
+    maxlen = max(map(len, lines))
+    return [(line + char * (maxlen - len(line))) for line in lines]
+
+
 class CharWright(Record):
 
     @staticmethod
     def new(chars, font= '../data/NotoSansMono-Regular.ttf', size= 20):
+        # todo swap eos and unk
+        assert "█" not in chars # eos
+        assert "�" not in chars # unk
         font = ImageFont.truetype(font, size)
         width, height = map(max, zip(*map(font.getsize  , chars)))
         _    , offset = map(min, zip(*map(font.getoffset, chars)))
         height -= offset
         offset = -offset
-        imags = np.stack([write(char, font, width, height, offset) for char in chars])
+        chars = "█�" + chars
+        char2idx = {char: rank for rank, char in enumerate(chars)}
+        char2img = {char: write(char, font, width, height, offset) for char in chars}
         return CharWright(
-              chars= chars, char2rank= {char: rank for rank, char in enumerate(chars)}
-            , imags= imags, char2imag= dict(zip(chars, imags))
+            chars= chars
+            , char2idx= char2idx
+            , char2img= char2img
             , offset= offset
             , height= height
             , width= width
@@ -54,69 +65,48 @@ class CharWright(Record):
         return CharWright.new(**load_pkl(path))
 
     def save(self, path):
-        save_pkl(path, {'chars': self.chars, 'font': self.font.path, 'size': self.size})
+        save_pkl(path, {'chars': self.chars[2:], 'font': self.font.path, 'size': self.size})
 
-    def write1(self, line):
+    def write1(self, line, nrow= 1):
         image = []
         for char in line:
             try:
-                imag = self.char2imag[char]
+                image.append(self.char2img[char])
             except KeyError:
-                imag = write(char, self.font, self.width, self.height, self.offset)
-            finally:
-                image.append(imag)
-        return np.stack(image, axis= 1)
+                image.append(write(char, self.font, self.width, self.height, self.offset))
+        return np.stack(image).reshape(nrow, -1, self.height, self.width)
 
-    def write(self, lines, maxlen):
-        # full white for padding
-        images = [self.write1(line[:maxlen]) for line in lines]
-        return np.stack(
-            [np.pad(htw, ((0,0),(0,maxlen-htw.shape[1]),(0,0)), 'constant', constant_values= 255)
-             for htw in images])
+    def write(self, lines):
+        return self.write1("".join(pad(lines)), len(lines))
 
-    def index1(self, line):
-        # index = rank + 2
-        # index 1 (rank -1) is reserved for unknown char
-        # index 0 (rank -2) is reserved for eos padding
-        return 2 + np.array([self.char2rank.get(char, -1) for char in line], np.int32)
+    def index1(self, line, nrow= 1):
+        # todo swap eos and unk
+        return np.array([self.char2idx.get(char, 1) for char in line], np.int32).reshape(nrow, -1)
 
-    def index(self, lines, maxlen):
-        # 0 for eos padding
-        indexs = [self.index1(line[:maxlen]) for line in lines]
-        return vpack(indexs, (len(indexs), maxlen), 0, np.int32)
+    def index(self, lines):
+        return self.index1("".join(pad(lines)), len(lines))
 
     def __call__(self, lines):
-        length = np.fromiter(map(len, lines), np.int32, len(lines))
-        maxlen = length.max()
-        return self.write(lines, maxlen), self.index(lines, maxlen), length
+        line = pad(lines)
+        nrow = len(lines)
+        return self.write1(self, line, nrow) \
+            ,  self.index1(self, line, nrow) \
+            ,  np.fromiter(map(len, lines), np.int32, nrow)
 
     def nchars(self):
-        return 2 + len(self.chars)
+        return len(self.chars)
 
-    def tostr1(self, idx):
-        chars = []
-        for i in idx:
-            if 0 == i:
-                break
-            elif 1 == i:
-                char = "�"
-            else:
-                char = self.chars[i-2]
-            chars.append(char)
-        return "".join(chars)
-
-    def tostr(self, idxs):
-        for idx in idxs:
-            yield self.tostr1(idx)
+    def string(self, idxs):
+        return "\n".join(["".join([self.chars[i] for i in idx]) for idx in idxs])
 
 
 # import matplotlib.pyplot as plt
 # def plot(x):
 #     if 3 == x.ndim:
-#         h, t, w = x.shape
-#         x = x.reshape(h, t*w)
+#         t, h, w = x.shape
+#         x = np.transpose(x, (1, 0, 2)).reshape(h, t*w)
 #     elif 4 == x.ndim:
-#         n, h, t, w = x.shape
-#         x = x.reshape(n*h, t*w)
+#         n, t, h, w = x.shape
+#         x = np.transpose(x, (0, 2, 1, 3)).reshape(n*h, t*w)
 #     plt.imshow(x, cmap= 'gray')
 #     plt.show()
