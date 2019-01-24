@@ -6,8 +6,8 @@ def model(mode
           , nchars
           , width
           , height
-          , len_src= None
           , src_img= None
+          , len_src= None
           , tgt_img= None
           , tgt_idx= None
           , len_tgt= None
@@ -20,7 +20,6 @@ def model(mode
     self = Record()
 
     with scope('source'):
-        # todo kuan
         # input nodes
         src_img = self.src_img = placeholder(tf.uint8, (None, None, height, width), src_img, 'src_img') # n t h w
         len_src = self.len_src = placeholder(tf.int32, (None,                    ), len_src, 'len_tgt') # n
@@ -65,7 +64,7 @@ def model(mode
         mask_tgt = tf.transpose(tf.sequence_mask(len_tgt + 1)) # t n
 
     with scope('decode'):
-        # needs to get input from latent space todo attention or some shit
+        # needs to get input from latent space to do attention or some shit
         decoder  = self.decoder  = tf.contrib.cudnn_rnn.CudnnGRU(num_layers, num_units, dropout= dropout)
         state_in = self.state_in = tf.zeros((num_layers, tf.shape(fire)[1], num_units))
         x, _ = _, (self.state_ex,) = decoder(fire, initial_state= (state_in,), training= 'train' == mode)
@@ -75,6 +74,7 @@ def model(mode
         mask = tf.expand_dims(mask, 1)
         attn = attention(x, emb_src, mask, num_units, name='attention')
         x = tf.transpose(attn, (2, 0, 1)) # n hw t ---> t n hw
+        # todo dropout residual layer norm
 
     if 'infer' != mode:
         x    = tf.boolean_mask(x   , mask_tgt)
@@ -119,17 +119,24 @@ if '__main__' == __name__:
     tf.set_random_seed(0)
     sess = tf.InteractiveSession()
 
+    cws = CharWright.load("../data/cws.pkl")
     cwt = CharWright.load("../data/cwt.pkl")
+    src = np.array(list(load_txt("../data/src.txt")))
     tgt = np.array(list(load_txt("../data/tgt.txt")))
-    tgt_valid = tgt[:4096]
-    tgt_train = tgt[4096:]
+    src_valid, src_train = src[:4096], src[4096:]
+    tgt_valid, tgt_train = tgt[:4096], tgt[4096:]
 
-    def batch(tgt= tgt_train, cwt= cwt, size= 256, seed= 0):
+    def feed(src, tgt, cws= cws, cwt= cwt):
+        src_img,          len_src = cws(src)
+        tgt_img, tgt_idx, len_tgt = cwt(tgt, ret_idx= True)
+        return src_img, len_src, tgt_img, tgt_idx, len_tgt
+
+    def batch(src= src_train, tgt= tgt_train, size= 256, seed= 0):
         for bat in batch_sample(len(tgt), size, seed):
-            yield cwt(tgt[bat])
+            yield feed(src[bat], tgt[bat])
 
-    tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.int32))
-    train = model('train', cwt.nchars(), cwt.width, cwt.height, tgt_img, tgt_idx, len_tgt)
+    src_img, len_src, tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.uint8, tf.int32, tf.int32))
+    train = model('train', cwt.nchars(), cwt.width, cwt.height, src_img, len_src, tgt_img, tgt_idx, len_tgt)
     valid = model('valid', cwt.nchars(), cwt.width, cwt.height)
     dummy = tuple(placeholder(tf.float32, ()) for _ in range(3))
 
@@ -140,11 +147,11 @@ if '__main__' == __name__:
                  , tf.summary.scalar('step_xid', dummy[1])
                  , tf.summary.scalar('step_err', dummy[2])))
             , fet= (valid.mae, valid.xid, valid.err)
-            , inp= (valid.tgt_img, valid.tgt_idx, valid.len_tgt)
+            , inp= (valid.src_img, valid.len_src, valid.tgt_img, valid.tgt_idx, valid.len_tgt)
             , tgt= tgt_valid
-            , cwt= cwt
+            , cws= cws
             , bat= 512):
-        stats = [sess.run(fet, dict(zip(inp, cwt(tgt[i:j])))) for i, j in partition(len(tgt), bat)]
+        stats = [sess.run(fet, dict(zip(inp, feed(src[i:j], tgt[i:j])))) for i, j in partition(len(tgt), bat)]
         stats = [np.mean(np.concatenate(stat)) for stat in zip(*stats)]
         wtr.add_summary(sess.run(log, dict(zip(dummy, stats))), step)
         wtr.flush()
