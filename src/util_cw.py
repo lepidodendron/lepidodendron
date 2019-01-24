@@ -85,13 +85,12 @@ class CharWright(Record):
 
     def tostr1(self, idx):
         chars = []
-        for i in idx-1:
-            try:
-                char = self.chars[i]
-            except IndexError:
+        for r in idx-1:
+            if 0 <= r:
+                char = self.chars[r]
+            else:
                 char = "�"
-            finally:
-                chars.append(char)
+            chars.append(char)
         return "".join(chars)
 
     def tostr(self, idxs):
