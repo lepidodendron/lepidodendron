@@ -39,15 +39,14 @@ class CharWright(Record):
 
     @staticmethod
     def new(chars, font= '../data/NotoSansMono-Regular.ttf', size= 20):
-        # todo swap eos and unk
-        assert "█" not in chars # eos
         assert "�" not in chars # unk
+        assert "█" not in chars # eos
         font = ImageFont.truetype(font, size)
         width, height = map(max, zip(*map(font.getsize  , chars)))
         _    , offset = map(min, zip(*map(font.getoffset, chars)))
         height -= offset
         offset = -offset
-        chars = "█�" + chars
+        chars = "�█" + chars
         char2idx = {char: rank for rank, char in enumerate(chars)}
         char2img = {char: write(char, font, width, height, offset) for char in chars}
         return CharWright(
@@ -80,8 +79,7 @@ class CharWright(Record):
         return self.write1("".join(pad(lines)), len(lines))
 
     def index1(self, line, nrow= 1):
-        # todo swap eos and unk
-        return np.array([self.char2idx.get(char, 1) for char in line], np.int32).reshape(nrow, -1)
+        return np.array([self.char2idx.get(char, 0) for char in line], np.int32).reshape(nrow, -1)
 
     def index(self, lines):
         return self.index1("".join(pad(lines)), len(lines))
