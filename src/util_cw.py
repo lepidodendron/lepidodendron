@@ -96,9 +96,9 @@ class CharWright(Record):
     def tostr1(self, idx):
         chars = []
         for i in idx:
-            if 0 == r:
+            if 0 == i:
                 break
-            elif 1 == r:
+            elif 1 == i:
                 char = "�"
             else:
                 char = self.chars[r-2]
