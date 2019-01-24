@@ -87,8 +87,7 @@ class CharWright(Record):
         return self.index1("".join(pad(lines)), len(lines))
 
     def __call__(self, lines):
-        line = pad(lines)
-        nrow = len(lines)
+        line, nrow = "".join(pad(lines)), len(lines)
         return self.write1(line, nrow) \
             ,  self.index1(line, nrow) \
             ,  np.fromiter(map(len, lines), np.int32, nrow)
