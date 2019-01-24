@@ -17,6 +17,10 @@ def model(mode
     assert mode in ('train', 'valid', 'infer')
     self = Record()
 
+    with scope('source'):
+        # todo bailey
+        pass
+
     with scope('target'):
         # input nodes
         tgt_img = self.tgt_img = placeholder(tf.uint8, (None, None, height, width), tgt_img, 'tgt_img') # n t h w
@@ -62,7 +66,7 @@ def model(mode
         mse = self.mse = tf.reduce_mean(tf.square(diff), axis= -1)
         xid = self.xid = tf.nn.sparse_softmax_cross_entropy_with_logits(logits= z, labels= tidx)
         err = self.err = tf.not_equal(tidx, pidx)
-        loss = tf.reduce_mean(xid) + tf.reduce_mean(mae) * height * width
+        loss = tf.reduce_mean(xid) + tf.reduce_mean(mae)
 
     with scope('update'):
         step = self.step = tf.train.get_or_create_global_step()
