@@ -50,7 +50,7 @@ def model(mode
         tidx = tf.boolean_mask(tidx, mask_tgt)
 
     with scope('output'):
-        y = tf.layers.dense(x, height * width, name= 'logit_img')
+        y = tf.layers.dense(x, height * width, name= 'dense_img')
         z = tf.layers.dense(x, nchars        , name= 'logit_idx')
         pred = self.pred = tf.clip_by_value(y, 0.0, 1.0)
         prob = self.prob = tf.nn.softmax(z)
