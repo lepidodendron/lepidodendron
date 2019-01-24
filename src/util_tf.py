@@ -4,6 +4,31 @@ import tensorflow as tf
 
 scope = partial(tf.variable_scope, reuse=tf.AUTO_REUSE)
 
+def attention(query, value, mask, dim, head=8):
+    """computes scaled dot-product attention
+    query : tensor f32 (b, d_q, t)
+    value : tensor f32 (b, d_v, s)
+     mask : tensor f32 (b,   t, s)
+         -> tensor f32 (b, dim, t)
+    `dim` must be divisible by `head`
+    """
+    assert not dim % head
+    d,h,c = dim, head, dim // head
+    b,_,t = get_shape(query)
+    b,_,s = get_shape(value)
+    # pretransformations
+    v = tf.reshape(tf.layers.dense(value, dim, name='v', use_bias=False), (b,h,c,s)) # bhcs <- bds <- bvs
+    k = tf.reshape(tf.layers.dense(value, dim, name='k', use_bias=False), (b,h,c,s)) # bhcs <- bds <- bvs
+    q = tf.reshape(tf.layers.dense(query, dim, name='q', use_bias=False), (b,h,c,s)) # bhct <- bdt <- bqt
+    # weight
+    a = tf.matmul(q, k, transpose_a= True) # bhts <- (bhtc <- bhct) @ bhcs
+    a *= c ** -0.5
+    if mask is not None: a += tf.expand_dims(mask, axis= 1)
+    a = tf.nn.softmax(a, axis= -1)
+    # attend
+    y = tf.matmul(v, a, transpose_b= True) # bhct <- bhcs @ (bhst <- bhts)
+    # posttransformation
+    return tf.layers.dense(tf.reshape(y, (b,d,t)), dim, name='p', use_bias=False) # bdt <- bdt <- bhct
 
 def profile(sess, wtr, run, feed_dict= None, prerun= 3, tag= 'flow'):
     for _ in range(prerun): sess.run(run, feed_dict)
