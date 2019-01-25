@@ -1,11 +1,10 @@
 from util import Record
-from util_tf import tf, scope, placeholder, flatten, attention
+from util_tf import tf, scope, placeholder, flatten, Attention
 
 
 def model(mode
-          , nchars
-          , width
-          , height
+          , src_dwh
+          , tgt_dwh
           , src_img= None
           , len_src= None
           , tgt_img= None
@@ -19,13 +18,17 @@ def model(mode
     assert mode in ('train', 'valid', 'infer')
     self = Record()
 
+    src_d, src_w, src_h = src_dwh
+    tgt_d, tgt_w, tgt_h = tgt_dwh
+
     with scope('source'):
         # input nodes
-        src_img = self.src_img = placeholder(tf.uint8, (None, None, height, width), src_img, 'src_img') # n t h w
-        len_src = self.len_src = placeholder(tf.int32, (None,                    ), len_src, 'len_tgt') # n
+        src_img = self.src_img = placeholder(tf.uint8, (None, None, src_h, src_w), src_img, 'src_img') # n s h w
+        len_src = self.len_src = placeholder(tf.int32, (None,                   ), len_src, 'len_tgt') # n
 
-        emb_src = tf.transpose(src_img, (1, 0, 2, 3)) # t n h w
-        emb_src = flatten(emb_src, 2, 3) # t n hw
+        # time major order
+        emb_src = tf.transpose(src_img, (1, 0, 2, 3)) # s n h w
+        emb_src = flatten(emb_src, 2, 3) # s n hw
         emb_src = tf.to_float(emb_src) / 255.0
 
         for i in range(num_layers):
@@ -43,9 +46,9 @@ def model(mode
 
     with scope('target'):
         # input nodes
-        tgt_img = self.tgt_img = placeholder(tf.uint8, (None, None, height, width), tgt_img, 'tgt_img') # n t h w
-        tgt_idx = self.tgt_idx = placeholder(tf.int32, (None, None               ), tgt_idx, 'tgt_idx') # n t
-        len_tgt = self.len_tgt = placeholder(tf.int32, (None,                    ), len_tgt, 'len_tgt') # n
+        tgt_img = self.tgt_img = placeholder(tf.uint8, (None, None, tgt_h, tgt_w), tgt_img, 'tgt_img') # n t h w
+        tgt_idx = self.tgt_idx = placeholder(tf.int32, (None, None              ), tgt_idx, 'tgt_idx') # n t
+        len_tgt = self.len_tgt = placeholder(tf.int32, (None,                   ), len_tgt, 'len_tgt') # n
 
         # time major order
         tgt_idx = tf.transpose(tgt_idx) # t n
@@ -70,9 +73,9 @@ def model(mode
         x, _ = _, (self.state_ex,) = decoder(fire, initial_state= (state_in,), training= 'train' == mode)
         x = tf.transpose(x, (1, 2, 0)) # t n hw ---> n hw t
         # transform mask to -inf and 0 in order to simply sum for whatever the fuck happens next
-        mask = tf.log(tf.sequence_mask(len_src, dtype= tf.float32))
-        mask = tf.expand_dims(mask, 1)
-        attn = attention(x, emb_src, mask, num_units, name='attention')
+        mask = tf.log(tf.sequence_mask(len_src, dtype= tf.float32)) # n s
+        mask = tf.expand_dims(mask, 1) # n 1 s
+        attn = Attention(num_units)(x, emb_src, mask)
         x = tf.transpose(attn, (2, 0, 1)) # n hw t ---> t n hw
         # todo dropout residual layer norm
 
@@ -82,8 +85,8 @@ def model(mode
         tidx = tf.boolean_mask(tidx, mask_tgt)
 
     with scope('output'):
-        y = tf.layers.dense(x, height * width, name= 'dense_img')
-        z = tf.layers.dense(x, nchars        , name= 'logit_idx')
+        y = tf.layers.dense(x, tgt_h * tgt_w, name= 'dense_img')
+        z = tf.layers.dense(x, tgt_d        , name= 'logit_idx')
         pred = self.pred = tf.clip_by_value(y, 0.0, 1.0)
         prob = self.prob = tf.nn.softmax(z)
         pidx = self.pidx = tf.argmax(z, axis= -1, output_type= tf.int32)
@@ -107,7 +110,7 @@ def model(mode
 
 if '__main__' == __name__:
 
-    trial = 'lang'
+    trial = 'bale'
     ckpt  =  None
 
     from tqdm import tqdm
@@ -126,6 +129,8 @@ if '__main__' == __name__:
     src_valid, src_train = src[:4096], src[4096:]
     tgt_valid, tgt_train = tgt[:4096], tgt[4096:]
 
+    # todo sort src_valid and tgt_valid by length for efficiency
+
     def feed(src, tgt, cws= cws, cwt= cwt):
         src_img,          len_src = cws(src)
         tgt_img, tgt_idx, len_tgt = cwt(tgt, ret_idx= True)
@@ -136,8 +141,8 @@ if '__main__' == __name__:
             yield feed(src[bat], tgt[bat])
 
     src_img, len_src, tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.uint8, tf.int32, tf.int32))
-    train = model('train', cwt.nchars(), cwt.width, cwt.height, src_img, len_src, tgt_img, tgt_idx, len_tgt)
-    valid = model('valid', cwt.nchars(), cwt.width, cwt.height)
+    train = model('train', cws.dwh(), cwt.dwh(), src_img, len_src, tgt_img, tgt_idx, len_tgt)
+    valid = model('valid', cws.dwh(), cwt.dwh())
     dummy = tuple(placeholder(tf.float32, ()) for _ in range(3))
 
     def log(step

@@ -4,31 +4,6 @@ import tensorflow as tf
 
 scope = partial(tf.variable_scope, reuse=tf.AUTO_REUSE)
 
-def attention(query, value, mask, dim, head=8):
-    """computes scaled dot-product attention
-    query : tensor f32 (b, d_q, t)
-    value : tensor f32 (b, d_v, s)
-     mask : tensor f32 (b,   t, s)
-         -> tensor f32 (b, dim, t)
-    `dim` must be divisible by `head`
-    """
-    assert not dim % head
-    d,h,c = dim, head, dim // head
-    b,_,t = get_shape(query)
-    b,_,s = get_shape(value)
-    # pretransformations
-    v = tf.reshape(tf.layers.dense(value, dim, name='v', use_bias=False), (b,h,c,s)) # bhcs <- bds <- bvs
-    k = tf.reshape(tf.layers.dense(value, dim, name='k', use_bias=False), (b,h,c,s)) # bhcs <- bds <- bvs
-    q = tf.reshape(tf.layers.dense(query, dim, name='q', use_bias=False), (b,h,c,s)) # bhct <- bdt <- bqt
-    # weight
-    a = tf.matmul(q, k, transpose_a= True) # bhts <- (bhtc <- bhct) @ bhcs
-    a *= c ** -0.5
-    if mask is not None: a += tf.expand_dims(mask, axis= 1)
-    a = tf.nn.softmax(a, axis= -1)
-    # attend
-    y = tf.matmul(v, a, transpose_b= True) # bhct <- bhcs @ (bhst <- bhts)
-    # posttransformation
-    return tf.layers.dense(tf.reshape(y, (b,d,t)), dim, name='p', use_bias=False) # bdt <- bdt <- bhct
 
 def profile(sess, wtr, run, feed_dict= None, prerun= 3, tag= 'flow'):
     for _ in range(prerun): sess.run(run, feed_dict)
@@ -107,3 +82,80 @@ def flatten(x, *axes, name= 'flatten'):
         if n is not None:
             shape.append(n)
         return tf.reshape(x, shape)
+
+
+def variable(name, shape, init= 'rand', initializers=
+             {  'zero': tf.initializers.zeros()
+              , 'unit': tf.initializers.ones()
+              , 'rand': tf.glorot_uniform_initializer()
+             }):
+    """wraps `tf.get_variable` to provide initializer based on usage"""
+    return tf.get_variable(name, shape, initializer= initializers.get(init, init))
+
+
+class Conv(Record):
+    """convolution from `m` to `n` channels
+
+    the default parameters make a position-wise linear layer
+
+    """
+
+    def __init__(self, n, m= None, size= 1, name= 'conv'):
+        if m is None: m = n
+        self.name = name
+        with scope(name):
+            self.kern = variable('kern', (size, m, n))
+
+    def __call__(self, x, name= None):
+        with scope(name or self.name):
+            return tf.nn.convolution(x, self.kern, padding= 'VALID', data_format= 'NCW')
+
+    def shape(self):
+        return get_shape(self.kern)
+
+
+class Attention(Record):
+    """computes multi-head scaled dot-product attention
+
+    query : tensor f32 (b, d_q, t)
+    value : tensor f32 (b, d_v, s)
+     mask : tensor f32 (b,   t, s)
+         -> tensor f32 (b, d_q, t)
+
+    `dim` must be divisible by `head`
+
+    `mask` has on-values 0 and off-values -inf
+
+    """
+
+    def __init__(self, dim, d_q= None, d_v= None, head= 8, name= 'attention'):
+        assert not dim % head
+        if d_q is None: d_q = dim
+        if d_v is None: d_v = dim
+        self.dim = dim
+        self.head = head
+        self.name = name
+        with scope(name):
+            self.v = Conv(dim, d_v, name= 'v')
+            self.k = Conv(dim, d_v, name= 'k')
+            self.q = Conv(dim, d_q, name= 'q')
+            self.p = Conv(d_q, dim, name= 'p')
+
+    def __call__(self, query, value, mask= None, name= None):
+        with scope(name or self.name):
+            d,h,c = self.dim, self.head, self.dim // self.head
+            b,_,t = get_shape(query)
+            b,_,s = get_shape(value)
+            # pretransformations
+            v = tf.reshape(self.v(value), (b,h,c,s)) # bhcs <- bds <- bvs
+            k = tf.reshape(self.k(value), (b,h,c,s)) # bhcs <- bds <- bvs
+            q = tf.reshape(self.q(query), (b,h,c,t)) # bhct <- bdt <- bqt
+            # weight
+            a = tf.matmul(q, k, transpose_a= True) # bhts <- (bhtc <- bhct) @ bhcs
+            a *= c ** -0.5
+            if mask is not None: a += tf.expand_dims(mask, axis= 1)
+            a = tf.nn.softmax(a, axis= -1)
+            # attend
+            y = tf.matmul(v, a, transpose_b= True) # bhct <- bhcs @ (bhst <- bhts)
+            # posttransformation
+            return self.p(tf.reshape(y, (b,d,t))) # bqt <- bdt <- bhct

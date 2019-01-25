@@ -94,8 +94,8 @@ class CharWright(Record):
             return self.write1(line, nrow) \
                 ,  np.fromiter(map(len, lines), np.int32, nrow)
 
-    def nchars(self):
-        return len(self.chars)
+    def dwh(self):
+        return len(self.chars), self.width, self.height
 
     def string(self, idxs):
         return "\n".join(["".join([self.chars[i] for i in idx]) for idx in idxs])
