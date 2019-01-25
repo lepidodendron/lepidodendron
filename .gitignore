@@ -1,2 +1,4 @@
+.ipynb_checkpoints
 /ckpt
 /data
+__pycache__

@@ -41,8 +41,8 @@ def model(mode
                                                                                                          batch_axis= 1),
                                                                                      training='train' == mode)
             emb_src = tf.concat((emb_fwd, tf.reverse_sequence(emb_bwd, len_src, seq_axis= 0, batch_axis= 1)), axis=-1)
-        emb_src = tf.layers.dense(emb_src, num_units, name= 'reduce_concat')
-        emb_src = tf.transpose(emb_src, (1, 2, 0))
+        emb_src = tf.layers.dense(emb_src, num_units, name= 'reduce_concat') # n s d
+        emb_src = tf.transpose(emb_src, (1, 2, 0)) # s d n
 
     with scope('target'):
         # input nodes
@@ -71,12 +71,12 @@ def model(mode
         decoder  = self.decoder  = tf.contrib.cudnn_rnn.CudnnGRU(num_layers, num_units, dropout= dropout)
         state_in = self.state_in = tf.zeros((num_layers, tf.shape(fire)[1], num_units))
         x, _ = _, (self.state_ex,) = decoder(fire, initial_state= (state_in,), training= 'train' == mode)
-        x = tf.transpose(x, (1, 2, 0)) # t n hw ---> n hw t
+        x = tf.transpose(x, (1, 2, 0)) # t n d ---> n d t
         # transform mask to -inf and 0 in order to simply sum for whatever the fuck happens next
         mask = tf.log(tf.sequence_mask(len_src, dtype= tf.float32)) # n s
         mask = tf.expand_dims(mask, 1) # n 1 s
         attn = Attention(num_units)(x, emb_src, mask)
-        x = tf.transpose(attn, (2, 0, 1)) # n hw t ---> t n hw
+        x = tf.transpose(attn, (2, 0, 1)) # n d t ---> t n d
         # todo dropout residual layer norm
 
     if 'infer' != mode:
@@ -136,7 +136,7 @@ if '__main__' == __name__:
         tgt_img, tgt_idx, len_tgt = cwt(tgt, ret_idx= True)
         return src_img, len_src, tgt_img, tgt_idx, len_tgt
 
-    def batch(src= src_train, tgt= tgt_train, size= 256, seed= 0):
+    def batch(src= src_train, tgt= tgt_train, size= 128, seed= 0):
         for bat in batch_sample(len(tgt), size, seed):
             yield feed(src[bat], tgt[bat])
 
@@ -155,7 +155,7 @@ if '__main__' == __name__:
             , inp= (valid.src_img, valid.len_src, valid.tgt_img, valid.tgt_idx, valid.len_tgt)
             , tgt= tgt_valid
             , cws= cws
-            , bat= 512):
+            , bat= 256):
         stats = [sess.run(fet, dict(zip(inp, feed(src[i:j], tgt[i:j])))) for i, j in partition(len(tgt), bat)]
         stats = [np.mean(np.concatenate(stat)) for stat in zip(*stats)]
         wtr.add_summary(sess.run(log, dict(zip(dummy, stats))), step)
