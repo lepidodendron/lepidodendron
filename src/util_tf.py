@@ -93,6 +93,61 @@ def variable(name, shape, init= 'rand', initializers=
     return tf.get_variable(name, shape, initializer= initializers.get(init, init))
 
 
+class Normalize(Record):
+    """layer normalization"""
+
+    def __init__(self, dim, name= 'normalize'):
+        self.name = name
+        with scope(name):
+            self.gain = variable('gain', (1, dim, 1), init= 'unit')
+            self.bias = variable('bias', (1, dim, 1), init= 'zero')
+
+    def __call__(self, x, name= None):
+        with scope(name or self.name):
+            mean, var = tf.nn.moments(x, 1, keep_dims= True)
+            return (x - mean) * tf.rsqrt(var + 1e-12) * self.gain + self.bias
+
+
+class Smooth(Record):
+    """binary smoothing if dim is None or channel-last one-hot smoothing"""
+
+    def __init__(self, rate, dim= None, name= 'smooth'):
+        self.dim = dim
+        self.name = name
+        with scope(name):
+            self.rate = placeholder(tf.float32, (), rate, 'rate')
+            self.shared = self.rate / (dim or 2)
+            self.smooth = 1.0 - self.rate
+
+    def __call__(self, x, name= None):
+        with scope(name or self.name):
+            if self.dim:
+                return tf.one_hot(x, self.dim, self.smooth + self.shared, self.shared)
+            else:
+                return x * self.smooth + self.shared
+
+
+class Dropout(Record):
+    """dropout shape may contain None (to be dynamically filled) or 1 (to
+    be broadcasted) or some fixed dimension, such as `(None, 256, 1)`
+
+    """
+
+    def __init__(self, rate, shape= None, name= 'dropout'):
+        self.shape = shape
+        self.name = name
+        with scope(name):
+            self.rate = placeholder(tf.float32, (), rate, 'rate')
+            self.keep = 1.0 - self.rate
+
+    def __call__(self, x, name= None):
+        with scope(name or self.name):
+            shape = get_shape(x)
+            if self.shape is not None:
+                shape = [d or shape[i] for i, d in enumerate(self.shape)]
+            return tf.nn.dropout(x, self.keep, shape)
+
+
 class Conv(Record):
     """convolution from `m` to `n` channels
 
