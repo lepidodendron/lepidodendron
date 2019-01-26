@@ -78,8 +78,8 @@ class Encode(Record):
                 ,         MlpBlock(dim, 'm1') \
                 ,         AttBlock(dim, 's2') \
                 ,         MlpBlock(dim, 'm2') \
-                ,         AttBlock(dim, 's3') \
-                ,         MlpBlock(dim, 'm3') \
+                # ,         AttBlock(dim, 's3') \
+                # ,         MlpBlock(dim, 'm3') \
                 # ,         AttBlock(dim, 's4') \
                 # ,         MlpBlock(dim, 'm4') \
                 # ,         AttBlock(dim, 's5') \
@@ -108,9 +108,9 @@ class Decode(Record):
                 ,         AttBlock(dim, 's2') \
                 ,         AttBlock(dim, 'a2') \
                 ,         MlpBlock(dim, 'm2') \
-                ,         AttBlock(dim, 's3') \
-                ,         AttBlock(dim, 'a3') \
-                ,         MlpBlock(dim, 'm3') \
+                # ,         AttBlock(dim, 's3') \
+                # ,         AttBlock(dim, 'a3') \
+                # ,         MlpBlock(dim, 'm3') \
                 # ,         AttBlock(dim, 's4') \
                 # ,         AttBlock(dim, 'a4') \
                 # ,         MlpBlock(dim, 'm4') \
@@ -144,7 +144,7 @@ class Model(Record):
     _new = 'dim_emb', 'dim_mid', 'dim_src', 'dim_tgt', 'cap', 'eos', 'bos'
 
     @staticmethod
-    def new(src_dwh, tgt_dwh, dim_emb= 512, cap= 256, eos= 1, bos= 0):
+    def new(src_dwh, tgt_dwh, dim_emb= 256, cap= 256, eos= 1, bos= 2):
         """-> Model with fields
 
           decode : Decode
@@ -200,7 +200,7 @@ class Model(Record):
             tgt = tf.to_float(flatten(tgt_img, 2, 3)) / 255.0 # b t c <- b t h w
             max_tgt = tf.reduce_max(len_tgt) + 1
             mask_tgt = tf.log(tf.expand_dims(causal_mask(max_tgt), axis= 0))
-            mask = tf.log(tf.expand_dims(tf.sequence_mask(len_tgt + 1, dtype= tf.float32), axis= 1))
+            mask = tf.sequence_mask(len_tgt + 1, dtype= tf.float32)
             btru = tf.pad(tgt, ((0,0),(1,0),(0,0)), constant_values= 0.0)
             true = tf.pad(tgt, ((0,0),(0,1),(0,0)), constant_values= 1.0)
             # tidx = tf.pad(tgt_idx, ((0,0),(0,1)), constant_values= 1)
@@ -265,8 +265,7 @@ class Model(Record):
         w = self.encode(w, self.mask_src,                   dropout, name= 'encode_') # bds
         x = self.decode(x, self.mask_tgt, w, self.mask_src, dropout, name= 'decode_') # bdt
         with scope('output_'):
-            x = tf.boolean_mask(tf.transpose(x, (0,2,1)), self.mask) # ?d <- btd <- bdt
-            y = self.out_img(x)
+            y = tf.boolean_mask(tf.transpose(self.out_img(x), (0,2,1)), self.mask) # ?d <- btd <- bdt
             # z = self.out_idx(x)
         with scope('pred_'): pred = tf.clip_by_value(y, 0.0, 1.0)
         # with scope('prob_'): prob = tf.nn.softmax(z, axis= -1)
@@ -278,7 +277,7 @@ class Model(Record):
             # xid = tf.nn.sparse_softmax_cross_entropy_with_logits(logits= z, labels= self.tidx)
             # err = tf.not_equal(self.tidx, pidx)
             loss = tf.reduce_mean(mae)
-        return Model(self, pred= pred, prob= prob, mae= mae, loss= loss)
+        return Model(self, pred= pred, mae= mae, mse= mse, loss= loss)
 
     def train(self, dropout= 0.1, smooth= 0.1, warmup= 4e3, beta1= 0.9, beta2= 0.98, epsilon= 1e-9):
         """-> Model with new fields, teacher forcing
@@ -297,7 +296,7 @@ class Model(Record):
             t = tf.to_float(s + 1)
             lr = (self.dim_emb ** -0.5) * tf.minimum(t ** -0.5, t * (warmup ** -1.5))
         up = tf.train.AdamOptimizer(lr, beta1, beta2, epsilon).minimize(self.loss, s)
-        return Model(self, dropout= dropout, smooth= smooth, step= s, lr= lr, up= up)
+        return Model(self, dropout= dropout, smooth= smooth, step= s, lr= lr, down= up)
 
 
 def batch_run(sess, model, fetch, src, tgt= None, batch= None):
@@ -334,15 +333,13 @@ if '__main__' == __name__:
     tgt_valid = tgt_valid[val]
 
     def feed(src, tgt, cws= cws, cwt= cwt):
-        src_img,len_src = cws(src)
-        tgt_img, len_tgt = cwt(tgt)
-        return src_img, len_src, tgt_img, len_tgt
+        return cws(src) + cwt(tgt)
 
     def batch(src= src_train, tgt= tgt_train, size= 128, seed= 0):
         for bat in batch_sample(len(tgt), size, seed):
             yield feed(src[bat], tgt[bat])
 
-    model = Model(cws.dwh(), cwt.dwh())
+    model = Model.new(cws.dwh(), cwt.dwh())
     train = model.data(*pipe(batch, (tf.uint8, tf.int32, tf.uint8, tf.int32))).train()
     valid = model.data().valid()
     dummy = tuple(placeholder(tf.float32, ()) for _ in range(2))
@@ -351,8 +348,8 @@ if '__main__' == __name__:
             , wtr= tf.summary.FileWriter("/cache/tensorboard-logdir/lepidodendron/{}".format(trial))
             , log= tf.summary.merge(
                 (  tf.summary.scalar('step_mae', dummy[0])
-                 , tf.summary.scalar('step_err', dummy[1])))
-            , fet= (valid.mae, valid.err)
+                 , tf.summary.scalar('step_mse', dummy[1])))
+            , fet= (valid.mae, valid.mse)
             , inp= (valid.src_img, valid.len_src, valid.tgt_img, valid.len_tgt)
             , src= src_valid
             , tgt= tgt_valid
