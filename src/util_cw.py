@@ -49,7 +49,7 @@ class CharWright(Record):
         chars = "�█" + chars
         char2idx = {char: rank for rank, char in enumerate(chars)}
         char2img = {char: write(char, font, width, height, offset) for char in chars}
-        char2img["█"] *= 0
+        char2img["█"] = char2img["█"] * 0 + 255
         return CharWright(
             chars= chars
             , char2idx= char2idx
