@@ -128,8 +128,9 @@ if '__main__' == __name__:
     tgt = np.array(list(load_txt("../data/tgt.txt")))
     src_valid, src_train = src[:4096], src[4096:]
     tgt_valid, tgt_train = tgt[:4096], tgt[4096:]
-
-    # todo sort src_valid and tgt_valid by length for efficiency
+    val = np.array(sorted(range(len(tgt_valid)), key= lambda i: max(len(src_valid[i]), len(tgt_valid[i]))))
+    src_valid = src_valid[val]
+    tgt_valid = tgt_valid[val]
 
     def feed(src, tgt, cws= cws, cwt= cwt):
         src_img,          len_src = cws(src)
@@ -153,8 +154,8 @@ if '__main__' == __name__:
                  , tf.summary.scalar('step_err', dummy[2])))
             , fet= (valid.mae, valid.xid, valid.err)
             , inp= (valid.src_img, valid.len_src, valid.tgt_img, valid.tgt_idx, valid.len_tgt)
+            , src= src_valid
             , tgt= tgt_valid
-            , cws= cws
             , bat= 256):
         stats = [sess.run(fet, dict(zip(inp, feed(src[i:j], tgt[i:j])))) for i, j in partition(len(tgt), bat)]
         stats = [np.mean(np.concatenate(stat)) for stat in zip(*stats)]
