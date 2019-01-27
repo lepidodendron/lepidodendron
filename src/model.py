@@ -41,8 +41,8 @@ def model(mode
                                                                                                          batch_axis= 1),
                                                                                      training='train' == mode)
             emb_src = tf.concat((emb_fwd, tf.reverse_sequence(emb_bwd, len_src, seq_axis= 0, batch_axis= 1)), axis=-1)
-        emb_src = tf.layers.dense(emb_src, num_units, name= 'reduce_concat') # n s d
-        emb_src = self.emb_src = tf.transpose(emb_src, (1, 2, 0)) # s d n
+        emb_src = tf.layers.dense(emb_src, num_units, name= 'reduce_concat') # s n d
+        emb_src = self.emb_src = tf.transpose(emb_src, (1, 2, 0)) # n d s
 
     with scope('target'):
         # input nodes
