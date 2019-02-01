@@ -25,7 +25,7 @@ def model(mode
     with scope('source'):
         # input nodes
         # src_img = self.src_img = placeholder(tf.uint8, (None, None, src_h, src_w), src_img, 'src_img') # n s h w
-        src_idx = self.src_indx = placeholder(tf.int32, (None, None, ), src_idx, 'src_idx') # n s
+        src_idx = self.src_idx = placeholder(tf.int32, (None, None), src_idx, 'src_idx') # n s
         len_src = self.len_src = placeholder(tf.int32, (None,                   ), len_src, 'len_src') # n
 
         # time major order
