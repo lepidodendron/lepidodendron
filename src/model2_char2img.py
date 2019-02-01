@@ -33,7 +33,7 @@ def model(mode
 
         # time major order
         # emb_src = tf.transpose(src_img, (1, 0, 2, 3)) # s n h w
-        emb_src = tf.transpose(src_idx, (1, 0))  # s n
+        emb_src = tf.transpose(src_idx, (1, 0 , 2))  # s n
         # emb_src = flatten(emb_src, 2, 3) # s n hw
         # emb_src = tf.to_float(emb_src) / 255.0
 
