@@ -30,7 +30,6 @@ def model(mode
         len_src = self.len_src = placeholder(tf.int32, (None,                   ), len_src, 'len_src') # n
 
         src_idx = tf.one_hot(src_idx, src_d, axis=-1) # n s v
-        print(src_idx.eval())
 
         # time major order
         # emb_src = tf.transpose(src_img, (1, 0, 2, 3)) # s n h w
@@ -157,7 +156,7 @@ if '__main__' == __name__:
     src_idx, len_src, tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.int32, tf.int32, tf.uint8, tf.int32, tf.int32))
     # train = model('train', cws.dwh(), cwt.dwh(), src_img, len_src, tgt_img, tgt_idx, len_tgt)
     train = model('train', cws.dwh(), cwt.dwh(), src_idx, len_src, tgt_img, tgt_idx, len_tgt)
-    valid = model('valid', cws.dwh(), cwt.dwh())
+    valid = model('valid', cws.dwh(), cwt.dwh(), src_idx)
     dummy = tuple(placeholder(tf.float32, ()) for _ in range(3))
 
     def log(step
