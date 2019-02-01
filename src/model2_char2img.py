@@ -28,7 +28,7 @@ def model(mode
         src_idx = self.src_idx = placeholder(tf.int32, (None, None), src_idx, 'src_idx') # n s
         len_src = self.len_src = placeholder(tf.int32, (None,                   ), len_src, 'len_src') # n
 
-        print(src_idx.eval())
+        print(src_idx.shape().eval())
 
         # time major order
         # emb_src = tf.transpose(src_img, (1, 0, 2, 3)) # s n h w
