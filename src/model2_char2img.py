@@ -167,7 +167,7 @@ if '__main__' == __name__:
                  , tf.summary.scalar('step_xid', dummy[1])
                  , tf.summary.scalar('step_err', dummy[2])))
             , fet= (valid.mae, valid.xid, valid.err)
-            , inp= (valid.src_img, valid.len_src, valid.tgt_img, valid.tgt_idx, valid.len_tgt)
+            , inp= (valid.src_idx, valid.len_src, valid.tgt_img, valid.tgt_idx, valid.len_tgt)
             , src= src_valid
             , tgt= tgt_valid
             , bat= 256):
