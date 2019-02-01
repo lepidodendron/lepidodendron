@@ -21,7 +21,7 @@ def model(mode
 
     src_d, src_w, src_h = src_dwh
     tgt_d, tgt_w, tgt_h = tgt_dwh
-    print(src_idx.eval())
+    # print(src_idx.eval())
 
     with scope('source'):
         # input nodes
