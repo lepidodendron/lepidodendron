@@ -28,12 +28,12 @@ def model(mode
         src_idx = self.src_idx = placeholder(tf.int32, (None, None), src_idx, 'src_idx') # n s
         len_src = self.len_src = placeholder(tf.int32, (None,                   ), len_src, 'len_src') # n
 
-        src_idx = tf.one_hot(src_idx, src_d, axis=-1)
+        src_idx = tf.one_hot(src_idx, src_d, axis=-1) # n s v
         print(src_idx.eval())
 
         # time major order
         # emb_src = tf.transpose(src_img, (1, 0, 2, 3)) # s n h w
-        emb_src = tf.transpose(src_idx, (1, 0 , 2))  # s n
+        emb_src = tf.transpose(src_idx, (1, 0 , 2))  # s n v
         # emb_src = flatten(emb_src, 2, 3) # s n hw
         # emb_src = tf.to_float(emb_src) / 255.0
 
@@ -49,7 +49,7 @@ def model(mode
             emb_src = tf.concat((emb_fwd, tf.reverse_sequence(emb_bwd, len_src, seq_axis= 0, batch_axis= 1)), axis=-1)
         # emb_src = tf.layers.dense(emb_src, num_units, name= 'reduce_concat') # s n d
         # emb_src = self.emb_src = tf.transpose(emb_src, (1, 2, 0)) # n d s
-        emb_src = self.emb_src = tf.transpose(emb_src, (1, 0)) # n s
+        emb_src = self.emb_src = tf.transpose(emb_src, (1, 2, 0)) # n v s
 
     with scope('target'):
         # input nodes
