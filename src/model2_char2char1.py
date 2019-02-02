@@ -119,7 +119,7 @@ def model(mode
 
 if '__main__' == __name__:
 
-    trial = 'bale2_c2i'
+    trial = 'bale2_c2closs'
     ckpt  =  None
 
     from tqdm import tqdm
