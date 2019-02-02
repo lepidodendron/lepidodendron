@@ -69,7 +69,7 @@ def model(mode
 
         # causal padding
         # fire = self.fire = tf.pad(tgt_img, ((1,0),(0,0),(0,0)), constant_values= 0.0)
-        fire = self.fire = tf.pad(tgt_idx, ((1,0),(0,0)), constant_values= 1)
+        fire = self.fire = tf.pad(tgt_idx, ((1,0),(0,0),(0,0)), constant_values= 1)
         # true = self.true = tf.pad(tgt_img, ((0,1),(0,0),(0,0)), constant_values= 1.0)
         tidx = self.tidx = tf.pad(tgt_idx, ((0,1),(0,0))      , constant_values= 1  )
         mask_tgt = tf.transpose(tf.sequence_mask(len_tgt + 1)) # t n
