@@ -76,8 +76,8 @@ def model(mode
     with scope('decode'):
         # needs to get input from latent space to do attention or some shit
         decoder  = self.decoder  = tf.contrib.cudnn_rnn.CudnnGRU(num_layers, num_units, dropout= dropout)
-        state_in = self.state_in = tf.zeros((num_layers, tf.shape(fire)[1], num_units))
-        x, _ = _, (self.state_ex,) = decoder(fire, initial_state= (state_in,), training= 'train' == mode)
+        state_in = self.state_in = tf.zeros((num_layers, tf.shape(tidx)[1], num_units))
+        x, _ = _, (self.state_ex,) = decoder(tidx, initial_state= (state_in,), training= 'train' == mode)
         # transform mask to -inf and 0 in order to simply sum for whatever the fuck happens next
         mask = tf.log(tf.sequence_mask(len_src, dtype= tf.float32)) # n s
         mask = tf.expand_dims(mask, 1) # n 1 s
