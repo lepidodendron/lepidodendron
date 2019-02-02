@@ -102,8 +102,8 @@ def model(mode
 
     with scope('losses'):
         diff = true - pred
-        # mae = self.mae = tf.reduce_mean(tf.abs(diff), axis= -1)
-        # mse = self.mse = tf.reduce_mean(tf.square(diff), axis= -1)
+        mae = self.mae = tf.reduce_mean(tf.abs(diff), axis= -1)
+        mse = self.mse = tf.reduce_mean(tf.square(diff), axis= -1)
         xid = self.xid = tf.nn.sparse_softmax_cross_entropy_with_logits(logits= z, labels= tidx)
         err = self.err = tf.not_equal(tidx, pidx)
         loss = tf.reduce_mean(xid)
