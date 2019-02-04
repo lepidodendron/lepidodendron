@@ -56,7 +56,7 @@ def model(mode
         mask_tgt = tf.transpose(tf.sequence_mask(len_tgt + 1)) # t n
 
     with scope('decode'):
-        fire = tf.one_hot(tgt_idx, tgt_d)
+        fire = tf.one_hot(fire, tgt_d)
         # needs to get input from latent space to do attention or some shit
         decoder  = self.decoder  = tf.contrib.cudnn_rnn.CudnnGRU(num_layers, num_units, dropout= dropout)
         state_in = self.state_in = tf.zeros((num_layers, tf.shape(fire)[1], num_units))
@@ -119,8 +119,8 @@ if '__main__' == __name__:
     tgt_valid = tgt_valid[val]
 
     def feed(src, tgt, cws= cws, cwt= cwt):
-        src_idx, len_src = cws.index(src), np.fromiter(map(len, src), np.int32, len(src))
-        tgt_idx, len_tgt = cws.index(tgt), np.fromiter(map(len, tgt), np.int32, len(tgt))
+        src_idx, len_src = cws(src, ret_img= False, ret_idx= True)
+        tgt_idx, len_tgt = cwt(tgt, ret_img= False, ret_idx= True)
         return src_idx, len_src, tgt_idx, len_tgt
 
     def batch(src= src_train, tgt= tgt_train, size= 128, seed= 0):
