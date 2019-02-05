@@ -1,5 +1,5 @@
-from model_base import model
-ckpt = "base_18"
+from model_ccc import model
+ckpt = "ccc_18"
 
 from itertools import islice
 from util_cw import CharWright

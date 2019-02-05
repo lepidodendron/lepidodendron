@@ -1,5 +1,5 @@
-from model2_char2char1 import model
-ckpt = "bale2_c2closs_36"
+from model_cic import model
+ckpt = "cic_36"
 
 from itertools import islice
 from util_cw import CharWright

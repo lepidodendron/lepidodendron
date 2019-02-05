@@ -112,7 +112,7 @@ def model(mode
 
 if '__main__' == __name__:
 
-    trial = 'bale2'
+    trial = 'iii'
     ckpt  =  None
 
     from tqdm import tqdm
@@ -135,8 +135,8 @@ if '__main__' == __name__:
     tgt_valid = tgt_valid[val]
 
     def feed(src, tgt, cws= cws, cwt= cwt):
-        src_img,          len_src = cws(src)
-        tgt_img, tgt_idx, len_tgt = cwt(tgt, ret_idx= True)
+        src_img,          len_src = cws(src, ret_img= True, ret_idx= False)
+        tgt_img, tgt_idx, len_tgt = cwt(tgt, ret_img= True, ret_idx= True )
         return src_img, len_src, tgt_img, tgt_idx, len_tgt
 
     def batch(src= src_train, tgt= tgt_train, size= 128, seed= 0):

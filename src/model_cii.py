@@ -5,7 +5,6 @@ from util_tf import tf, scope, placeholder, flatten, Attention, Normalize
 def model(mode
           , src_dwh
           , tgt_dwh
-          # , src_img= None
           , src_idx= None
           , len_src= None
           , tgt_img= None
@@ -21,21 +20,15 @@ def model(mode
 
     src_d, src_w, src_h = src_dwh
     tgt_d, tgt_w, tgt_h = tgt_dwh
-    # print(src_idx.eval())
 
     with scope('source'):
         # input nodes
-        # src_img = self.src_img = placeholder(tf.uint8, (None, None, src_h, src_w), src_img, 'src_img') # n s h w
         src_idx = self.src_idx = placeholder(tf.int32, (None, None), src_idx, 'src_idx') # n s
-        len_src = self.len_src = placeholder(tf.int32, (None,                   ), len_src, 'len_src') # n
-
-        src_idx = tf.one_hot(src_idx, src_d, axis=-1) # n s v
+        len_src = self.len_src = placeholder(tf.int32, (None,     ), len_src, 'len_src') # n
 
         # time major order
-        # emb_src = tf.transpose(src_img, (1, 0, 2, 3)) # s n h w
-        emb_src = tf.transpose(src_idx, (1, 0 , 2))  # s n v
-        # emb_src = flatten(emb_src, 2, 3) # s n hw
-        # emb_src = tf.to_float(emb_src) / 255.0
+        src_idx = tf.transpose(src_idx, (1,0)) # s n
+        emb_src = tf.one_hot(src_idx, src_d) # s n v
 
         for i in range(num_layers):
             with scope("rnn{}".format(i + 1)):
@@ -48,8 +41,7 @@ def model(mode
                                                                                      training='train' == mode)
             emb_src = tf.concat((emb_fwd, tf.reverse_sequence(emb_bwd, len_src, seq_axis= 0, batch_axis= 1)), axis=-1)
         # emb_src = tf.layers.dense(emb_src, num_units, name= 'reduce_concat') # s n d
-        # emb_src = self.emb_src = tf.transpose(emb_src, (1, 2, 0)) # n d s
-        emb_src = self.emb_src = tf.transpose(emb_src, (1, 2, 0)) # n v s
+        emb_src = self.emb_src = tf.transpose(emb_src, (1, 2, 0)) # n d s
 
     with scope('target'):
         # input nodes
@@ -119,7 +111,7 @@ def model(mode
 
 if '__main__' == __name__:
 
-    trial = 'bale2_c2i'
+    trial = 'cii'
     ckpt  =  None
 
     from tqdm import tqdm
@@ -142,21 +134,17 @@ if '__main__' == __name__:
     tgt_valid = tgt_valid[val]
 
     def feed(src, tgt, cws= cws, cwt= cwt):
-        # src_img,          len_src = cws(src)
-        _      , src_idx, len_src = cws(src, ret_idx= True)
-        tgt_img, tgt_idx, len_tgt = cwt(tgt, ret_idx= True)
-        # return src_img, len_src, tgt_img, tgt_idx, len_tgt
+        src_idx,          len_src = cws(src, ret_img= False, ret_idx= True)
+        tgt_img, tgt_idx, len_tgt = cwt(tgt, ret_img= True , ret_idx= True)
         return src_idx, len_src, tgt_img, tgt_idx, len_tgt
 
     def batch(src= src_train, tgt= tgt_train, size= 128, seed= 0):
         for bat in batch_sample(len(tgt), size, seed):
             yield feed(src[bat], tgt[bat])
 
-    # src_img, len_src, tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.uint8, tf.int32, tf.int32))
     src_idx, len_src, tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.int32, tf.int32, tf.uint8, tf.int32, tf.int32))
-    # train = model('train', cws.dwh(), cwt.dwh(), src_img, len_src, tgt_img, tgt_idx, len_tgt)
     train = model('train', cws.dwh(), cwt.dwh(), src_idx, len_src, tgt_img, tgt_idx, len_tgt)
-    valid = model('valid', cws.dwh(), cwt.dwh(), src_idx)
+    valid = model('valid', cws.dwh(), cwt.dwh())
     dummy = tuple(placeholder(tf.float32, ()) for _ in range(3))
 
     def log(step

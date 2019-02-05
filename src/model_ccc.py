@@ -96,7 +96,7 @@ def model(mode
 
 if '__main__' == __name__:
 
-    trial = 'base'
+    trial = 'ccc'
     ckpt  =  None
 
     from tqdm import tqdm

@@ -85,13 +85,13 @@ class CharWright(Record):
     def index(self, lines):
         return self.index1("".join(pad(lines)), len(lines))
 
-    def __call__(self, lines, ret_img= True, ret_idx= False):
+    def __call__(self, lines, ret_img= True, ret_idx= False, ret_len= True):
         line, nrow = "".join(pad(lines)), len(lines)
         ret = []
         if ret_img: ret.append(self.write1(line, nrow))
         if ret_idx: ret.append(self.index1(line, nrow))
-        ret.append(np.fromiter(map(len, lines), np.int32, nrow))
-        return ret
+        if ret_len: ret.append(np.fromiter(map(len, lines), np.int32, nrow))
+        return tuple(ret)
 
     def dwh(self):
         return len(self.chars), self.width, self.height
