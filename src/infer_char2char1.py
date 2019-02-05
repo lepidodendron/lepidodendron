@@ -1,5 +1,5 @@
-from model2 import model
-ckpt = "bale2_36"
+from model2_char2char1 import model
+ckpt = "bale2_c2closs_36"
 
 from itertools import islice
 from util_cw import CharWright
@@ -22,17 +22,17 @@ val = np.array(sorted(range(len(src)), key= lambda i: len(src[i])))
 src = src[val]
 tgt = tgt[val]
 
-def autoreg(src_img, len_src, max_len= 256, eos= 1):
-    emb_src = sess.run(m.emb_src, {m.src_img: src_img, m.len_src: len_src})
+def autoreg(src_idx, len_src, max_len= 256, eos= 1):
+    emb_src = sess.run(m.emb_src, {m.src_idx: src_idx, m.len_src: len_src})
     x_shape = 1, len_src.size, cwt.height * cwt.width
     x = np.zeros(x_shape, np.uint8)
     s = sess.run(m.state_in, {m.fire: x})
     idxs = []
     for _ in range(max_len):
-        s, pred, pidx = sess.run((m.state_ex, m.pred, m.pidx), {m.state_in: s, m.fire: x, m.emb_src: emb_src, m.len_src: len_src})
+        s, pidx = sess.run((m.state_ex, m.pidx), {m.state_in: s, m.fire: x, m.emb_src: emb_src, m.len_src: len_src})
         if np.all(pidx == eos): break
         idxs.append(pidx)
-        x = pred
+        x = cwt.write(cwt.string(pidx))
         x.shape = x_shape
     return np.concatenate(idxs).T
 
@@ -46,7 +46,7 @@ def trim_str(idxs):
 
 def translate(src):
     for i, j in partition(len(src), 256):
-        yield from trim_str(autoreg(*cws(src[i:j])))
+        yield from trim_str(autoreg(*cws(src[i:j], ret_img= False, ret_idx= True)))
 
 save_txt("../tmp/prd", translate(src))
 save_txt("../tmp/tgt", tgt)

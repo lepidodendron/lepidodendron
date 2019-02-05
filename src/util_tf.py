@@ -1,5 +1,7 @@
 from util import Record, partial
 import tensorflow as tf
+# import os
+# os.environ["CUDA_VISIBLE_DEVICES"] = "1"
 
 
 scope = partial(tf.variable_scope, reuse=tf.AUTO_REUSE)
