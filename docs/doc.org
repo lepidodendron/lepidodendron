@@ -1,0 +1,164 @@
+* rationale
+
+in natural language processing, sentences are commonly treated as sequences of discrete values:
+words, characters, or more recently [[https://www.aclweb.org/anthology/P16-1162][word pieces]] and [[https://arxiv.org/abs/1804.10959][sentence pieces]] (character n-grams).
+these discrete values follow power or exponential distributions,
+which means that they can never be modeled fully.
+even on the character-level,
+we have 2^16 unicode code points,
+and the majority of them are extremely rare.
+
+in statistical machine learning, discrete values are encoded as one-hot vectors.
+it is common to map them to dense vectors by an embedding matrix.
+the effective of this practice suggests there are hidden structures in what we consider to be discrete.
+the hidden structures are their way of interactions.
+the learning of an embedding is an application of [[https://ncatlab.org/nlab/show/Yoneda+embedding][yoneda embedding]],
+which underlies representation learning.
+it says that we can embed an arbitrary category in its [[https://ncatlab.org/nlab/show/category+of+presheaves][category of presheaves]] for study.
+the arbitrary category may have structures which are difficult to observe or utilize,
+but its category of presheaves is guaranteed to have friendly structures.
+the yoneda embedding of a discrete category is in fact one-hot encoding.
+however what we consider to be discrete values are rarely a discrete collection,
+where all members only interact orthogonally,
+in which case we have no reason to model them together in the first place.
+
+in this work we investigate the possibility of using glyphs as character embedding,
+in the task of neural machine translation.
+machine translation commonly handles languages in the text form.
+recent works have been done in end-to-end speech translation (todo cite).
+to our knowledge, this is the first attempt at end-to-end image translation.
+
+we would like to answer the following questions:
+- is end-to-end image translation possible, and if so
+- how is it different from text translation, specifically
+- how is glyph embedding different from learned embedding
+
+* dataset
+
+- [[http://www.statmt.org/europarl/][europarl]] de-en corpus, for german to english translation
+- we take only sentences within [3,256] characters
+  + instances shorter than 3 are misaligned or uninformative
+  + instances longer than 256 are longer than we care to model
+  + in total 1578167 sentence pairs
+- we take 4096 instances for validation
+
+* glyph rendering
+
+we use the [[https://python-pillow.org/][pillow]] library and the [[https://www.google.com/get/noto/][noto]] sans mono fonts.
+
+each glyph is a grayscale image, namely a rank-2 tensor with height and width.
+the values are scaled in range [0,1].
+
+with font size 20, all glyphs have width 12, but vary in height.
+taking the maximum possible height is wasteful.
+some space would almost always be empty.
+we consider the frequent characters, which cover 99.95% of the texts,
+and use the maximum height of the frequent characters.
+
+| lang | total char | frequent char | height |
+|------+------------+---------------+--------|
+| de   |        306 |            78 |     25 |
+| en   |        293 |            72 |     20 |
+
+for the =bos= symbol, we use the whitespace, which has a full black glyph.
+for the =eos= symbol and padding positions, we use a full white glyph,
+which correspond to code point =\u2588=.
+
+glyph rendering is very slow.
+we cache the glyphs for the frequent characters,
+and only render the rare ones on the fly.
+
+in situations where we need the discrete encoding of characters,
+we consider only the frequent ones.
+the rest are mapped to code point =\ufffd=.
+
+|     | img | idx |
+|-----+-----+-----|
+| bos | 0.0 |   2 |
+| eos | 1.0 |   1 |
+| unk |     |   0 |
+
+* model architecture
+
+as inputs, each glyph is flattened into a vector.
+in some experiments we also tried one-hot vectors.
+
+- encoder: 3 layers of stacked bidirectional gru
+- decoder: 3 layers of unidirectional gru, followed by attention
+- attention: [[https://arxiv.org/abs/1706.03762][multi-head scaled dot-product attention]] with residual connection and layer normalization
+
+as outputs, a dense layer is connected after attention to predict the next glyph.
+we also connect a separate dense layer after attention to predict the logits for characters.
+we tried connecting the logit layer after the glyph layer,
+but it was less effective.
+
+we monitor the glyph prediction errors (mae & mse),
+and the character prediction loss (xent) and error.
+
+** training
+
+the decoder is autoregressive, trained with teacher forcing.
+
+- adam optimizer
+- learning rate decay
+- dropout: 0.1 between recurrent layers and before residual in attention
+- batch size: 128
+
+we train for 10k steps per round, 37 rounds in total, which amounts to 60 epochs.
+a checkpoint is saved for each round.
+
+** loss function
+
+to minimize the glyph prediction error, we tried the following losses.
+- binary cross-entropy with sigmoid activation
+- mae with sigmoid activation
+- mae without activation
+- mae with [0,1] clipping
+- mse with [0,1] clipping
+
+the most effective loss is mae with clipping,
+for dropping both mae and mse.
+
+since the mae loss for glyph prediction are roughly 1/10 of the xent loss for character prediction,
+we multiply the mae loss by 10 to balance the scale,
+and add them together as the total loss.
+
+** trials
+
+the encoder-decoder can be described as a mapping =(src, tgt) -> prd=
+or equivalently =src -> tgt -> prd=,
+where =src= is the encoder input, =tgt= the decoder input, and =prd= the decoder output.
+
+each of those 3 positions may be glyphs or one-hot encoded characters.
+we denote the former with =g= and the latter with =c=,
+and write the types for the 3 positions in order.
+so a trial with =c= for =src=, =g= for =tgt=, and =c= for =prd= will be named =cgc=.
+note that any trial which predicts glyphs also predicts the characters,
+in order to compute the bleu scores.
+
+todo how prediction works
+
+| trial | bleu | ckpt |
+|-------+------+------|
+| ccc   | 30.9 |   18 |
+| ggg   | 21.8 |   36 |
+| cgc   |  0.3 |   36 |
+| cgg   |      |      |
+
+the baseline =ccc= started to overfit after 18 rounds of training,
+so we took that checkpoint instead of the final one.
+
+** misc
+
+we also tried the transformer architecture.
+but since self-attention has quadratic complexity with length,
+we had to reduce the model to half the size (256 dimensions) and 2 layers
+to reach the same memory usage and training speed for a fair comparison.
+the results are much worse.
+
+* future works
+
+- cjk, where glyphs contain morphology
+- convolutional network
+- without clear character boundary
+- with multiple fonts and typefaces

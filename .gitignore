@@ -1,5 +1,6 @@
 .ipynb_checkpoints
 /ckpt
 /data
+/log
 /tmp
 __pycache__
