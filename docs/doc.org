@@ -136,7 +136,14 @@ so a trial with =c= for =src=, =g= for =tgt=, and =c= for =prd= will be named =c
 note that any trial which predicts glyphs also predicts the characters,
 in order to compute the bleu scores.
 
-todo how prediction works
+during autoregressive inference, the decoder prediction is fed back as the input for the next step.
+for a decoder which takes glyphs and produces glyphs, we have two options:
+- use the predicted glyphs as feedbacks;
+- use the predicted characters and convert to glyphs as feedbacks.
+the second approach does not produce anything intelligible.
+the inference process terminates when the =eos= character is produced,
+or when the maximum step reaches 256.
+we compute the bleu scores with [[https://github.com/mjpost/sacreBLEU][sacrebleu]] using =intl= tokenizer.
 
 | trial | bleu | ckpt |
 |-------+------+------|
