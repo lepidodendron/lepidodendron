@@ -95,7 +95,7 @@ but it was less effective.
 we monitor the glyph prediction errors (mae & mse),
 and the character prediction loss (xent) and error.
 
-** training
+* training
 
 the decoder is autoregressive, trained with teacher forcing.
 
@@ -107,7 +107,7 @@ the decoder is autoregressive, trained with teacher forcing.
 we train for 10k steps per round, 37 rounds in total, which amounts to 60 epochs.
 a checkpoint is saved for each round.
 
-** loss function
+* loss function
 
 to minimize the glyph prediction error, we tried the following losses.
 - binary cross-entropy with sigmoid activation
@@ -123,7 +123,7 @@ since the mae loss for glyph prediction are roughly 1/10 of the xent loss for ch
 we multiply the mae loss by 10 to balance the scale,
 and add them together as the total loss.
 
-** trials
+* trials
 
 the encoder-decoder can be described as a mapping =(src, tgt) -> prd=
 or equivalently =src -> tgt -> prd=,
@@ -155,7 +155,7 @@ we compute the bleu scores with [[https://github.com/mjpost/sacreBLEU][sacrebleu
 the baseline =ccc= started to overfit after 18 rounds of training,
 so we took that checkpoint instead of the final one.
 
-** misc
+* misc
 
 we also tried the transformer architecture.
 but since self-attention has quadratic complexity with length,
