@@ -5,7 +5,7 @@ from util_tf import tf, scope, placeholder, flatten, Attention, Normalize
 def model(mode
           , src_dwh
           , tgt_dwh
-          , src_idx= None
+          , src_img= None
           , len_src= None
           , tgt_img= None
           , tgt_idx= None
@@ -23,12 +23,13 @@ def model(mode
 
     with scope('source'):
         # input nodes
-        src_idx = self.src_idx = placeholder(tf.int32, (None, None), src_idx, 'src_idx') # n s
-        len_src = self.len_src = placeholder(tf.int32, (None,     ), len_src, 'len_src') # n
+        src_img = self.src_img = placeholder(tf.uint8, (None, None, src_h, src_w), src_img, 'src_img') # n s h w
+        len_src = self.len_src = placeholder(tf.int32, (None,                   ), len_src, 'len_src') # n
 
         # time major order
-        src_idx = tf.transpose(src_idx, (1,0)) # s n
-        emb_src = tf.one_hot(src_idx, src_d) # s n v
+        emb_src = tf.transpose(src_img, (1, 0, 2, 3)) # s n h w
+        emb_src = flatten(emb_src, 2, 3) # s n hw
+        emb_src = tf.to_float(emb_src) / 255.0
 
         for i in range(num_layers):
             with scope("rnn{}".format(i + 1)):
@@ -111,7 +112,7 @@ def model(mode
 
 if '__main__' == __name__:
 
-    trial = 'cii'
+    trial = 'ggg'
     ckpt  =  None
 
     from tqdm import tqdm
@@ -134,16 +135,16 @@ if '__main__' == __name__:
     tgt_valid = tgt_valid[val]
 
     def feed(src, tgt, cws= cws, cwt= cwt):
-        src_idx,          len_src = cws(src, ret_img= False, ret_idx= True)
-        tgt_img, tgt_idx, len_tgt = cwt(tgt, ret_img= True , ret_idx= True)
-        return src_idx, len_src, tgt_img, tgt_idx, len_tgt
+        src_img,          len_src = cws(src, ret_img= True, ret_idx= False)
+        tgt_img, tgt_idx, len_tgt = cwt(tgt, ret_img= True, ret_idx= True )
+        return src_img, len_src, tgt_img, tgt_idx, len_tgt
 
     def batch(src= src_train, tgt= tgt_train, size= 128, seed= 0):
         for bat in batch_sample(len(tgt), size, seed):
             yield feed(src[bat], tgt[bat])
 
-    src_idx, len_src, tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.int32, tf.int32, tf.uint8, tf.int32, tf.int32))
-    train = model('train', cws.dwh(), cwt.dwh(), src_idx, len_src, tgt_img, tgt_idx, len_tgt)
+    src_img, len_src, tgt_img, tgt_idx, len_tgt = pipe(batch, (tf.uint8, tf.int32, tf.uint8, tf.int32, tf.int32))
+    train = model('train', cws.dwh(), cwt.dwh(), src_img, len_src, tgt_img, tgt_idx, len_tgt)
     valid = model('valid', cws.dwh(), cwt.dwh())
     dummy = tuple(placeholder(tf.float32, ()) for _ in range(3))
 
@@ -154,7 +155,7 @@ if '__main__' == __name__:
                  , tf.summary.scalar('step_xid', dummy[1])
                  , tf.summary.scalar('step_err', dummy[2])))
             , fet= (valid.mae, valid.xid, valid.err)
-            , inp= (valid.src_idx, valid.len_src, valid.tgt_img, valid.tgt_idx, valid.len_tgt)
+            , inp= (valid.src_img, valid.len_src, valid.tgt_img, valid.tgt_idx, valid.len_tgt)
             , src= src_valid
             , tgt= tgt_valid
             , bat= 256):

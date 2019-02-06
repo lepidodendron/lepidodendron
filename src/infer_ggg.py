@@ -1,5 +1,5 @@
-from model_iii import model
-ckpt = "iii_36"
+from model_ggg import model
+ckpt = "ggg_36"
 
 from itertools import islice
 from util_cw import CharWright

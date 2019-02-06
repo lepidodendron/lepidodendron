@@ -98,7 +98,7 @@ def model(mode
         mse = self.mse = tf.reduce_mean(tf.square(diff), axis= -1)
         xid = self.xid = tf.nn.sparse_softmax_cross_entropy_with_logits(logits= z, labels= tidx)
         err = self.err = tf.not_equal(tidx, pidx)
-        loss = tf.reduce_mean(xid)
+        loss = tf.reduce_mean(xid) + tf.reduce_mean(mae) * 10.0
 
     with scope('update'):
         step = self.step = tf.train.get_or_create_global_step()
@@ -111,7 +111,7 @@ def model(mode
 
 if '__main__' == __name__:
 
-    trial = 'cic'
+    trial = 'cgg'
     ckpt  =  None
 
     from tqdm import tqdm
