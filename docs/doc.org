@@ -150,7 +150,7 @@ we compute the bleu scores with [[https://github.com/mjpost/sacreBLEU][sacrebleu
 | ccc   | 30.9 |   18 |
 | ggg   | 21.8 |   36 |
 | cgc   |  0.3 |   36 |
-| cgg   |      |      |
+| cgg   | 23.0 |   36 |
 
 the baseline =ccc= started to overfit after 18 rounds of training,
 so we took that checkpoint instead of the final one.
