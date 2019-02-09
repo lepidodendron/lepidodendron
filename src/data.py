@@ -4,9 +4,9 @@ from util_cw import chars, CharWright
 from util_io import load_txt, save_txt
 from util_np import np
 
-path_src = "../data/europarl-v7.de-en.de"
-path_tgt = "../data/europarl-v7.de-en.en"
-max_char = 256
+path_src = "../data/UNv1.0.en-zh.zh"
+path_tgt = "../data/UNv1.0.en-zh.en"
+max_char = 128
 
 #############
 # load data #
@@ -29,7 +29,7 @@ del src_tgt
 # save data #
 #############
 
-cws = CharWright.new(chars(src))
+cws = CharWright.new(chars(src), font= "../data/NotoSansMonoCJKsc-Regular.otf")
 cwt = CharWright.new(chars(tgt))
 
 cws.save("../data/cws.pkl")
