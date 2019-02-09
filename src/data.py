@@ -32,8 +32,8 @@ del src_tgt
 cws = CharWright.new(chars(src), font= "../data/NotoSansMonoCJKsc-Regular.otf")
 cwt = CharWright.new(chars(tgt))
 
-cws.save("../data/cws.pkl")
-cwt.save("../data/cwt.pkl")
+cws.save("../data/zh-en/cws.pkl")
+cwt.save("../data/zh-en/cwt.pkl")
 
-save_txt("../data/src.txt", src)
-save_txt("../data/tgt.txt", tgt)
+save_txt("../data/zh-en/src.txt", src)
+save_txt("../data/zh-en/tgt.txt", tgt)

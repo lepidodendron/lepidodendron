@@ -111,7 +111,7 @@ def model(mode
 
 if '__main__' == __name__:
 
-    trial = 'cgg'
+    trial = 'cgg_zh'
     ckpt  =  None
 
     from tqdm import tqdm
@@ -123,10 +123,10 @@ if '__main__' == __name__:
     tf.set_random_seed(0)
     sess = tf.InteractiveSession()
 
-    cws = CharWright.load("../data/cws.pkl")
-    cwt = CharWright.load("../data/cwt.pkl")
-    src = np.array(list(load_txt("../data/src.txt")))
-    tgt = np.array(list(load_txt("../data/tgt.txt")))
+    cws = CharWright.load("../data/zh-en/cws.pkl")
+    cwt = CharWright.load("../data/zh-en/cwt.pkl")
+    src = np.array(list(load_txt("../data/zh-en/src.txt")))
+    tgt = np.array(list(load_txt("../data/zh-en/tgt.txt")))
     src_valid, src_train = src[:4096], src[4096:]
     tgt_valid, tgt_train = tgt[:4096], tgt[4096:]
     val = np.array(sorted(range(len(tgt_valid)), key= lambda i: max(len(src_valid[i]), len(tgt_valid[i]))))
@@ -138,7 +138,7 @@ if '__main__' == __name__:
         tgt_img, tgt_idx, len_tgt = cwt(tgt, ret_img= True , ret_idx= True)
         return src_idx, len_src, tgt_img, tgt_idx, len_tgt
 
-    def batch(src= src_train, tgt= tgt_train, size= 128, seed= 0):
+    def batch(src= src_train, tgt= tgt_train, size= 256, seed= 0):
         for bat in batch_sample(len(tgt), size, seed):
             yield feed(src[bat], tgt[bat])
 
@@ -157,7 +157,7 @@ if '__main__' == __name__:
             , inp= (valid.src_idx, valid.len_src, valid.tgt_img, valid.tgt_idx, valid.len_tgt)
             , src= src_valid
             , tgt= tgt_valid
-            , bat= 256):
+            , bat= 512):
         stats = [sess.run(fet, dict(zip(inp, feed(src[i:j], tgt[i:j])))) for i, j in partition(len(tgt), bat)]
         stats = [np.mean(np.concatenate(stat)) for stat in zip(*stats)]
         wtr.add_summary(sess.run(log, dict(zip(dummy, stats))), step)
