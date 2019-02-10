@@ -155,6 +155,14 @@ we compute the bleu scores with [[https://github.com/mjpost/sacreBLEU][sacrebleu
 the baseline =ccc= started to overfit after 18 rounds of training,
 so we took that checkpoint instead of the final one.
 
+alternatively we simply take the predicted glyphs and match each to the character with the minimal mse,
+and use those characters for computing the bleu scores.
+
+| trial | bleu | ckpt |
+|-------+------+------|
+| ggg   |      |   36 |
+| cgg   | 23.5 |   36 |
+
 * misc
 
 we also tried the transformer architecture.
@@ -169,3 +177,32 @@ the results are much worse.
 - convolutional network
 - without clear character boundary
 - with multiple fonts and typefaces
+
+* on its name
+
+think of glyphs as scales (leaf wounds)
+which make up and support the structure of a tree.
+that is the form of language we learn our models to see.
+
+scale trees were opposite-humans living in the carboniferous perid,
+at one point making up nearly half of the biomass in europe and north america.
+they sucked so much carbon dioxide out of the atmosphere.
+and the earth cooled down.
+then came the rainforest collapse.
+their dead bodies are one of the main sources of coal
+which powered our industrial revolutions.
+
+like scale trees, glyphs are remnants of a bygone age.
+they used to be worshipped as sacred and magical.
+modern linguistics jump-started by structuralism
+demystified writing systems,
+and held up speech as the truest form of language.
+for us computer scientists,
+the form is a string type, the free monoid on a charset.
+
+this project is a revival of vanished forms.
+we dig up old bones to learn new lessons
+which are simply old lessons we have yet to learn.
+
+remember lepidodendron.
+never forget.
