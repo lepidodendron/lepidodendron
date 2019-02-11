@@ -147,12 +147,12 @@ the inference process terminates when the maximum step reaches 256.
 the predicted sentences are trimmed at the first =eos= character.
 we compute the bleu scores with [[https://github.com/mjpost/sacreBLEU][sacrebleu]] using =intl= tokenizer.
 
-| trial | ckpt |    1 |    2 |    3 |    4 |    5 | bleu |
-|-------+------+------+------+------+------+------+------|
-| ccc   |   18 |  n/a |  n/a | 30.9 |  n/a | 20.3 | 30.9 |
-| ggg   |   36 | 21.9 | 22.2 | 30.2 | 25.3 | 23.0 | 21.8 |
-| cgc   |   36 |  n/a |  n/a | 30.9 |  n/a | 22.4 |  0.3 |
-| cgg   |   36 | 22.9 | 23.5 | 30.9 | 26.5 | 24.1 | 23.0 |
+| trial | ckpt |    1 |    2 |    3 |    4 |    5 |
+|-------+------+------+------+------+------+------|
+| ccc   |   18 |  n/a |  n/a | 30.9 |  n/a | 20.3 |
+| ggg   |   36 | 21.9 | 22.2 | 30.2 | 25.3 | 23.0 |
+| cgc   |   36 |  n/a |  n/a | 30.9 |  n/a | 22.4 |
+| cgg   |   36 | 22.9 | 23.5 | 30.9 | 26.5 | 24.1 |
 
 the baseline =ccc= started to overfit after 18 rounds of training,
 so we took that checkpoint instead of the final one.
