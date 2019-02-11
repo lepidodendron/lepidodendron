@@ -1,0 +1,151 @@
+* glyph rendering
+
+src.pdf
+tgt.pdf
+
+* inference
+
+see section =trials= in =doc.org=
+
+154:
+1. =But this issue is still open.█.ark.█ust█...█ ak█.a ms also apan.=
+2. =But this issue is still open.█uero.█ue.█oo.█uo.█oo as also opon.=
+3. =But this is also open.█ubility.█ust.█.█ is also open.█ust.█.█ is=
+4. =But this is also open to this point.█uoocia.█uro.█ust: this is a=
+5. =Best ieteraty, toolegene  is anounit.█..█..█.  C. torn again.█.█=
+
+* examples
+
+** decision points
+
+038: persons vs people
+- cgg: =Free om of movement for people███████████████free om on migpeers=
+- ggg: =Free movement of persons█y brto ovc of tucomaa o.█.ortei █.██(█(=
+
+143: cgg was tempted to produce "very much" but decided not to
+- cgg: =We velcome this development.█ SS  werkine.█ O wncurs toisgest█.s=
+- ggg: =We very much welcome this development.█ of these.█ eth █uels.█.█=
+
+077: ggg went for the passive voice and failed
+- cgg: =That has not happened. however.█Nesn.█ustir.█  andenl. Tuthuld.█=
+- ggg: =That has not heen drtammed.█.af the sucomda.█Aask Aitomis. hot i=
+
+312: false passive, try to save with a magic word
+- cgg: =That itdris should not ce surprised.ay most.of us.█.asbod.  au t=
+- ggg: =That stvses should not be surprised by most of us.█.█.er  an tun=
+
+** mismatch between glyphs and chars
+
+003: this + that = thas
+- cgg: =I agree.with thas.█..█.a.█.bt...█........█ust...█.T.█ .bel█.sta.=
+
+444: on vs of
+- cgg: =Some of you mentioned Chapter 23 of corruption.█ .█ as.e. █S█...=
+
+005: period vs question
+- cgg: =Thank you, Mr Puerta.█..█...█..█.e.█.esker.█.e.n Tt ulins.█.ase=
+
+027: period vs exclamation
+- cgg: =Think of Vilvoorde�R�aki��█u��█�ar��█use.is tuturaed�an aask��n�=
+
+** failed to find the right word
+
+193: the word "Denkungsart" is difficult to translate; ggg avoids it; cgg tries to fill it in but failed to find the word
+- cgg: =But this manoul is completely wrong.█��█����n aurr���█����█���█�=
+- ggg: =But this ms completely wrong�█ueti�█uasti��█usts  p the fttestin=
+
+057: both failed to find a word which translates "bekommen"
+- cgg: =But you will brcopp them.█...n....█...█.esn.█...█.asn Cner.yu.█.=
+- ggg: =But you will gnli e them.█uetle.█.tunlens.█ if them.█.tf the Uuc=
+
+007: for translating "unangenehm", both seem to be going for "unpleasant" but failed
+- cgg: =That is unclased.█..██..██..█uTE██H is uncecembul..█.a█..██.█ T█=
+- ggg: =This is anpleasid.█ if tonts.█.titkes.█.if the Etturity.█.█.if t=
+
+** struggle between synonyms
+
+069: for translating "Hinweis", ggg picked "comment" but the chars seem to be going for "point", and cgg could not decide
+- cgg: =This is an important polter.█unt█.a.█.at█urt█uamr █usti █B2 rnde=
+- ggg: =This is an important plmment.█.eswiudh.to te ane█uali█ient.█utnm=
+
+181: they found different words "critical" & "crucial"; the chars in cgg seem to be going for "vital"
+- cgg: =This is vriticall█ stunt..█.. .█..█..█uet█.e.█ua is auveful.█.s.=
+- ggg: =This is crucial.█ieds.█ wutkrios.█ if tuttoe█.ann.and ihe Eutult=
+
+306: both failed to translated "unwahren"; cgg char tried to go for "totally" instead of "completely"
+- cgg: =We have adopted a tompletely untrubteated text.█ aspea...█.a....=
+- ggg: =We have adopted a completely untransable text.█uats █uslt uptu t=
+
+** should have stopped early
+
+095: both should have stopped, but kept going and failed to find the right words
+- cgg: =The Commission reaponded immediately.wint ne...██.█...█.ezn.██.█=
+- ggg: =The Commission rmmediately responded to the nttenvattat.█.if tha=
+
+112: should have stopped at "one side" but the model was unsure; it tried to keep going but could find the word
+- cgg: =That is one side.of the ppc....█.s.█..█urt.█urt█.█rianesrth █ust=
+
+157: should have stopped at "why"
+- cgg: =It is also easy to explain why.toou.iusk.██.██ in in turt █u an=
+
+098: both simply don't know how to stop
+- cgg: =I very much hope that we wnderl ..t  .n u ....█.█....chrk. █ e █=
+- ggg: =I very much hope that we .neur..�f.u....li....I .lsosee..he....s=
+
+** hour format
+
+235: fail
+- cgg: =(The sitting was closed at 4.25 p.m.)██.)█..█h.█h.█D█C.█ChCCChCh=
+- ggg: =(The sitting was closed at 4.25 p.m.)█h.)█h.)█.█.█.ete-█.otes)██=
+
+287: success
+- cgg: =The vote will take place today at 6.30 p.m.█.a.█..██.██  █ CRwtn=
+- ggg: =The vote will take place today at 6.30 p.m.█.█.█.█.█.█.█.█.█.█.(=
+
+** unknown chars get correct glyphs
+
+058: slash
+- cgg: =Theato report (A5-0090�1999)███S█ █  █ █ E █ █ █  █ S█ ██ █ )██=
+
+051: Q
+- cgg: =�uestions to Cr Byrne███████████████████████████████████████████=
+
+517: Z
+- cgg: =�imbabwe was once a pron ri ging country and could be reptrved.a=
+
+** recover from noisy predictions
+
+130: the first word failed, but the rest followed through anyways
+- cgg: =This is a commendable initiative.█ atk.█...█us █urt█.█Iat.█Ia wn=
+
+092: the second word (probably "think") failed
+- cgg: =I tolr  this would be wrong.█ asbed..█ e.█  ..█Nat█ s█ (ooniuldr=
+
+223: multiple failures
+- cgg: =I tett to k that it is the most important.oucn.in my view.█uster=
+
+* more examples
+
+** interesting examples
+
+039: try to produce complete sentences
+- cgg: =In short, a success story.is a success.story.█...█...█...█...█..=
+- ggg: =In short, there is a success story.█.e.█Ual.█.ate.█.ack.█.etk.█.=
+
+123: failed to translate "Bauingenieur"
+- cgg: =I am antuied by bonstructing futbarewfffect fn toutiri.bf bur.et=
+- ggg: =I am fnerert from Bauingening.█ af Bark..n.█.an tn tans.tensess█=
+
+** funny examples
+
+086:
+- cgg: =In aact,█ akia dndaupne . ..█ astu.█ as.. █.z..██.█ a█uakn in an=
+
+239: bailey this one sounds like you
+- cgg: =This is a curl bgulty mnconder.█us.█uas█ S.██T.█ A is artivnal.█=
+
+213:
+- cgg: =I would jike to respond vereatles versfsly.ayery..█...█.a.█us █=
+
+416:
+- cgg: =Globalisation has dade our industries iueak.█...█.a.█.e.█.en. ..=

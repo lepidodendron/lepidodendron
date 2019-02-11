@@ -72,12 +72,18 @@ def zip_imgs(*imgs):
     return img
 
 
-def plot(x):
+def plot(x, name= None):
     if 3 == x.ndim:
         t, h, w = x.shape
         x = np.transpose(x, (1, 0, 2)).reshape(h, t*w)
     elif 4 == x.ndim:
         n, t, h, w = x.shape
         x = np.transpose(x, (0, 2, 1, 3)).reshape(n*h, t*w)
-    plt.imshow(x, cmap= 'gray')
+    ax = plt.axes([0,0,1,1], frameon=False)
+    ax.get_xaxis().set_visible(False)
+    ax.get_yaxis().set_visible(False)
+    plt.autoscale(tight= True)
+    plt.imshow(x, cmap= 'gray', interpolation= 'none')
+    if name is not None:
+        plt.savefig("../docs/image/{}.pdf".format(name), bbox_inches= 'tight', pad_inches= 0)
     plt.show()
