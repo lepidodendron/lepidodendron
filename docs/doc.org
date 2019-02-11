@@ -137,31 +137,25 @@ note that any trial which predicts glyphs also predicts the characters,
 in order to compute the bleu scores.
 
 during autoregressive inference, the decoder prediction is fed back as the input for the next step.
-for a decoder which takes glyphs and produces glyphs, we have two options:
-- use the predicted glyphs as feedbacks;
-- use the predicted characters and convert to glyphs as feedbacks.
-the second approach does not produce anything intelligible.
-the inference process terminates when the =eos= character is produced,
-or when the maximum step reaches 256.
+for a decoder which takes glyphs and produces glyphs, we have these options:
+1. use the predicted glyphs as feedbacks and the predicted chars for bleu;
+2. use the predicted glyphs as feedbacks and match the glyphs to chars for bleu;
+3. convert the predicted chars to glyphs as feedbacks
+4. match the predicted glyphs to chars and convert to glyphs as feedbacks
+5. take the predicted probs over chars for weighted average glyphs as feedbacks
+the inference process terminates when the maximum step reaches 256.
+the predicted sentences are trimmed at the first =eos= character.
 we compute the bleu scores with [[https://github.com/mjpost/sacreBLEU][sacrebleu]] using =intl= tokenizer.
 
-| trial | bleu | ckpt |
-|-------+------+------|
-| ccc   | 30.9 |   18 |
-| ggg   | 21.8 |   36 |
-| cgc   |  0.3 |   36 |
-| cgg   | 23.0 |   36 |
+| trial | ckpt |    1 |    2 |    3 |    4 |    5 | bleu |
+|-------+------+------+------+------+------+------+------|
+| ccc   |   18 |  n/a |  n/a | 30.9 |  n/a | 20.3 | 30.9 |
+| ggg   |   36 | 21.9 | 22.2 | 30.2 | 25.3 | 23.0 | 21.8 |
+| cgc   |   36 |  n/a |  n/a | 30.9 |  n/a | 22.4 |  0.3 |
+| cgg   |   36 | 22.9 | 23.5 | 30.9 | 26.5 | 24.1 | 23.0 |
 
 the baseline =ccc= started to overfit after 18 rounds of training,
 so we took that checkpoint instead of the final one.
-
-alternatively we simply take the predicted glyphs and match each to the character with the minimal mse,
-and use those characters for computing the bleu scores.
-
-| trial | bleu | ckpt |
-|-------+------+------|
-| ggg   |      |   36 |
-| cgg   | 23.5 |   36 |
 
 * misc
 
@@ -180,7 +174,7 @@ the results are much worse.
 
 * on its name
 
-think of glyphs as scales (leaf wounds)
+think of glyphs as scales (leaf scars)
 which make up and support the structure of a tree.
 that is the form of language we learn our models to see.
 

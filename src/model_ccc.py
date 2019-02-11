@@ -56,7 +56,7 @@ def model(mode
         mask_tgt = tf.transpose(tf.sequence_mask(len_tgt + 1)) # t n
 
     with scope('decode'):
-        fire = tf.one_hot(fire, tgt_d)
+        fire = self.fire2 = tf.one_hot(fire, tgt_d)
         # needs to get input from latent space to do attention or some shit
         decoder  = self.decoder  = tf.contrib.cudnn_rnn.CudnnGRU(num_layers, num_units, dropout= dropout)
         state_in = self.state_in = tf.zeros((num_layers, tf.shape(fire)[1], num_units))
