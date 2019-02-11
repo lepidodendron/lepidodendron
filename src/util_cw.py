@@ -99,6 +99,20 @@ class CharWright(Record):
     def string(self, idxs):
         return "\n".join(["".join([self.chars[i] for i in idx]) for idx in idxs])
 
+    def _glyphs(self):
+        glyphs = np.array([self.char2img[c] for c in self.chars], dtype= np.float32)
+        glyphs /= 255.0
+        glyphs.shape = len(self.chars), self.height * self.width
+        return glyphs
+
+    def match(self, image):
+        if not hasattr(self, 'glyphs'): self.glyphs = self._glyphs()
+        return np.argmin(np.mean(np.abs(self.glyphs - np.expand_dims(image, -2)), axis= -1), axis= -1)
+
+    def average(self, probs):
+        if not hasattr(self, 'glyphs'): self.glyphs = self._glyphs()
+        return probs @ self.glyphs
+
 
 # import matplotlib.pyplot as plt
 # def plot(x):
