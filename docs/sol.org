@@ -115,6 +115,9 @@ see section =trials= in =doc.org=
 
 ** recover from noisy predictions
 
+097: the first word failed, but the rest followed through anyways
+- cgg: =Joneriona   motion for a resolution█████████J███████████████████=
+
 116: the second word (probably "think") failed
 - cgg: =I tolr  this would be wrong.█ asbed..█ e.█  ..█Nat█ s█ (ooniuldr=
 
