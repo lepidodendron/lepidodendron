@@ -140,8 +140,8 @@ during autoregressive inference, the decoder prediction is fed back as the input
 for a decoder which takes glyphs and produces glyphs, we have these options:
 1. use the predicted glyphs as feedbacks and the predicted chars for bleu;
 2. use the predicted glyphs as feedbacks and match the glyphs to chars for bleu;
-3. convert the predicted chars to glyphs as feedbacks
-4. match the predicted glyphs to chars and convert to glyphs as feedbacks
+3. match the predicted glyphs to chars and convert to glyphs as feedbacks
+4. convert the predicted chars to glyphs as feedbacks
 5. take the predicted probs over chars for weighted average glyphs as feedbacks
 the inference process terminates when the maximum step reaches 256.
 the predicted sentences are trimmed at the first =eos= character.
@@ -149,10 +149,10 @@ we compute the bleu scores with [[https://github.com/mjpost/sacreBLEU][sacrebleu
 
 | trial | ckpt |    1 |    2 |    3 |    4 |    5 |
 |-------+------+------+------+------+------+------|
-| ccc   |   18 |  n/a |  n/a | 30.9 |  n/a | 20.3 |
-| ggg   |   36 | 21.9 | 22.2 | 30.2 | 25.3 | 23.0 |
-| cgc   |   36 |  n/a |  n/a | 30.9 |  n/a | 22.4 |
-| cgg   |   36 | 22.9 | 23.5 | 30.9 | 26.5 | 24.1 |
+| ccc   |   18 |  n/a |  n/a |  n/a | 30.9 | 20.3 |
+| cgc   |   36 |  n/a |  n/a |  n/a | 30.9 | 22.4 |
+| cgg   |   36 | 22.9 | 23.5 | 26.5 | 30.9 | 24.1 |
+| ggg   |   36 | 21.9 | 22.2 | 25.3 | 30.2 | 23.0 |
 
 the baseline =ccc= started to overfit after 18 rounds of training,
 so we took that checkpoint instead of the final one.
