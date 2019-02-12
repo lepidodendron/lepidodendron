@@ -42,8 +42,8 @@ see section =trials= in =doc.org=
 444: on vs of
 - cgg: =Some of you mentioned Chapter 23 of corruption.█ .█ as.e. █S█...=
 
-005: period vs question
-- cgg: =Thank you, Mr Puerta.█..█...█..█.e.█.esker.█.e.n Tt ulins.█.ase=
+000: period vs question
+- cgg: =Are there any comments?█ a?be???an?ture?s??ook???█u???r there?ar=
 
 027: period vs exclamation
 - cgg: =Think of Vilvoorde�R�aki��█u��█�ar��█use.is tuturaed�an aask��n�=
