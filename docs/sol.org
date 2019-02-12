@@ -82,7 +82,7 @@ see section =trials= in =doc.org=
 - cgg: =The Commission reaponded immediately.wint ne...██.█...█.ezn.██.█=
 - ggg: =The Commission rmmediately responded to the nttenvattat.█.if tha=
 
-112: should have stopped at "one side" but the model was unsure; it tried to keep going but could find the word
+020: should have stopped at "one side" but the model was unsure; it tried to keep going but could find the word
 - cgg: =That is one side.of the ppc....█.s.█..█urt.█urt█.█rianesrth █ust=
 
 157: should have stopped at "why"
@@ -107,7 +107,7 @@ see section =trials= in =doc.org=
 058: slash
 - cgg: =Theato report (A5-0090�1999)███S█ █  █ █ E █ █ █  █ S█ ██ █ )██=
 
-051: Q
+019: Q
 - cgg: =�uestions to Cr Byrne███████████████████████████████████████████=
 
 517: Z
@@ -115,10 +115,7 @@ see section =trials= in =doc.org=
 
 ** recover from noisy predictions
 
-130: the first word failed, but the rest followed through anyways
-- cgg: =This is a commendable initiative.█ atk.█...█us █urt█.█Iat.█Ia wn=
-
-092: the second word (probably "think") failed
+116: the second word (probably "think") failed
 - cgg: =I tolr  this would be wrong.█ asbed..█ e.█  ..█Nat█ s█ (ooniuldr=
 
 223: multiple failures

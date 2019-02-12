@@ -112,15 +112,3 @@ class CharWright(Record):
     def average(self, probs):
         if not hasattr(self, 'glyphs'): self.glyphs = self._glyphs()
         return probs @ self.glyphs
-
-
-# import matplotlib.pyplot as plt
-# def plot(x):
-#     if 3 == x.ndim:
-#         t, h, w = x.shape
-#         x = np.transpose(x, (1, 0, 2)).reshape(h, t*w)
-#     elif 4 == x.ndim:
-#         n, t, h, w = x.shape
-#         x = np.transpose(x, (0, 2, 1, 3)).reshape(n*h, t*w)
-#     plt.imshow(x, cmap= 'gray')
-#     plt.show()
