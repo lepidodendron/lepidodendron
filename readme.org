@@ -1,7 +1,7 @@
 * documentations
 
 - [[docs/doc.org][documentation]]
-- slides
+- [[docs/slides_20190213.pdf][slides]]
 - papers
 
 * quick start
