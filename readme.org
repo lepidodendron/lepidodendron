@@ -37,7 +37,7 @@ cd src
 
 - pick a model from =model_*.py= and run the script
 - the checkpoints will be saved in =ckpt=
-- the tensorboard summaries will be saved in =log= (todo make it true)
+- the tensorboard summaries will be saved in =log=
 
 *** evaluate translation
 
@@ -45,5 +45,3 @@ cd src
 - change the =ckpt= and =mode= if necessary
 - 2 files =tgt= and =prd= will be saved in =tmp=
 - run =sacrebleu -tok intl -b -i prd tgt= there for the bleu
-
-todo jupyter notebook

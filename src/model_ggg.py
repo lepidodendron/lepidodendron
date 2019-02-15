@@ -149,7 +149,7 @@ if '__main__' == __name__:
     dummy = tuple(placeholder(tf.float32, ()) for _ in range(3))
 
     def log(step
-            , wtr= tf.summary.FileWriter("/cache/tensorboard-logdir/lepidodendron/{}".format(trial))
+            , wtr= tf.summary.FileWriter("../log/{}".format(trial))
             , log= tf.summary.merge(
                 (  tf.summary.scalar('step_mae', dummy[0])
                  , tf.summary.scalar('step_xid', dummy[1])

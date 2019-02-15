@@ -167,6 +167,11 @@ the results are much worse.
 
 * future works
 
+|           |    1 |    2 |    3 |    4 |    5 |
+|-----------+------+------+------+------+------|
+| cgg_zh_36 | 31.6 | 31.6 | 39.7 | 46.8 | 40.4 |
+| ggg_zh_36 | 31.7 | 32.3 | 35.3 | 42.8 | 37.1 |
+
 - cjk, where glyphs contain morphology
 - convolutional network
 - without clear character boundary
