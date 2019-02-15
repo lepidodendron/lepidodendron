@@ -12,13 +12,13 @@ def autoreg2(m, sess, cwt, s, x, emb_src, len_src):
     return s, pred, pidx
 
 def autoreg3(m, sess, cwt, s, x, emb_src, len_src):
-    s, pidx = sess.run((m.state_ex, m.pidx), {m.state_in: s, m.fire: x, m.emb_src: emb_src, m.len_src: len_src})
+    s, pred = sess.run((m.state_ex, m.pred), {m.state_in: s, m.fire: x, m.emb_src: emb_src, m.len_src: len_src})
+    pidx = cwt.match(pred)
     pred = cwt.write(cwt.string(pidx)) / 255.0
     return s, pred, pidx
 
 def autoreg4(m, sess, cwt, s, x, emb_src, len_src):
-    s, pred = sess.run((m.state_ex, m.pred), {m.state_in: s, m.fire: x, m.emb_src: emb_src, m.len_src: len_src})
-    pidx = cwt.match(pred)
+    s, pidx = sess.run((m.state_ex, m.pidx), {m.state_in: s, m.fire: x, m.emb_src: emb_src, m.len_src: len_src})
     pred = cwt.write(cwt.string(pidx)) / 255.0
     return s, pred, pidx
 

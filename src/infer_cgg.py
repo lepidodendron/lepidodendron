@@ -1,5 +1,5 @@
 from model_cgg import model
-ckpt = "cgg_36"
+ckpt = "cgg_zh_36"
 mode = 1
 
 from infer import infer, trim_str
@@ -11,15 +11,15 @@ from util_tf import tf
 sess = tf.InteractiveSession()
 
 # load model
-cws = CharWright.load("../data/cws.pkl")
-cwt = CharWright.load("../data/cwt.pkl")
+cws = CharWright.load("../data/zh-en/cws.pkl")
+cwt = CharWright.load("../data/zh-en/cwt.pkl")
 m = model('infer', cws.dwh(), cwt.dwh())
 saver = tf.train.Saver()
 saver.restore(sess, "../ckpt/{}".format(ckpt))
 
 # the first 4096 instances are used for validation
-src = np.array(list(islice(load_txt("../data/src.txt"), 4096)))
-tgt = np.array(list(islice(load_txt("../data/tgt.txt"), 4096)))
+src = np.array(list(islice(load_txt("../data/zh-en/src.txt"), 4096)))
+tgt = np.array(list(islice(load_txt("../data/zh-en/tgt.txt"), 4096)))
 val = np.array(sorted(range(len(src)), key= lambda i: len(src[i])))
 src = src[val]
 tgt = tgt[val]
@@ -27,7 +27,7 @@ tgt = tgt[val]
 def translate(src, mode):
     for i, j in partition(len(src), 256):
         src_idx, len_src = cws(src[i:j], ret_img= False, ret_idx= True)
-        pred, pidx = infer(mode, m, sess, cwt, src_idx, len_src)
+        pred, pidx = infer(mode, m, sess, cwt, src_idx, len_src, t= 128)
         yield from trim_str(pidx, cwt)
 
 save_txt("../tmp/prd", translate(src, mode))
