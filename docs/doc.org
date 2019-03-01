@@ -5,7 +5,7 @@ words, characters, or more recently [[https://www.aclweb.org/anthology/P16-1162]
 these discrete values follow power or exponential distributions,
 which means that they can never be modeled fully.
 even on the character-level,
-we have 2^16 unicode code points,
+we have over 10^5 defined unicode code points,
 and the majority of them are extremely rare.
 
 in statistical machine learning, discrete values are encoded as one-hot vectors.
