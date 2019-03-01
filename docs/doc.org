@@ -10,7 +10,7 @@ and the majority of them are extremely rare.
 
 in statistical machine learning, discrete values are encoded as one-hot vectors.
 it is common to map them to dense vectors by an embedding matrix.
-the effective of this practice suggests there are hidden structures in what we consider to be discrete.
+the effectiveness of this practice suggests there are hidden structures in what we consider to be discrete.
 the hidden structures are their way of interactions.
 the learning of an embedding is an application of [[https://ncatlab.org/nlab/show/Yoneda+embedding][yoneda embedding]],
 which underlies representation learning.
@@ -25,7 +25,7 @@ in which case we have no reason to model them together in the first place.
 in this work we investigate the possibility of using glyphs as character embedding,
 in the task of neural machine translation.
 machine translation commonly handles languages in the text form.
-recent works have been done in end-to-end speech translation (todo cite).
+recent works have been done in [[https://arxiv.org/pdf/1802.08395.pdf][end-to-end speech translation]].
 to our knowledge, this is the first attempt at end-to-end image translation.
 
 we would like to answer the following questions:
