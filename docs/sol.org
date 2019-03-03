@@ -58,11 +58,15 @@ see section =trials= in =doc.org=
 - cgg: =But you will brcopp them.█...n....█...█.esn.█...█.asn Cner.yu.█.=
 - ggg: =But you will gnli e them.█uetle.█.tunlens.█ if them.█.tf the Uuc=
 
+123: failed to translate "Bauingenieur"
+- cgg: =I am antuied by bonstructing futbarewfffect fn toutiri.bf bur.et=
+- ggg: =I am fnerert from Bauingening.█ af Bark..n.█.an tn tans.tensess█=
+
+** struggle between synonyms
+
 007: for translating "unangenehm", both seem to be going for "unpleasant" but failed
 - cgg: =That is unclased.█..██..██..█uTE██H is uncecembul..█.a█..██.█ T█=
 - ggg: =This is anpleasid.█ if tonts.█.titkes.█.if the Etturity.█.█.if t=
-
-** struggle between synonyms
 
 069: for translating "Hinweis", ggg picked "comment" but the chars seem to be going for "point", and cgg could not decide
 - cgg: =This is an important polter.█unt█.a.█.at█urt█uamr █usti █B2 rnde=
@@ -131,10 +135,6 @@ see section =trials= in =doc.org=
 039: try to produce complete sentences
 - cgg: =In short, a success story.is a success.story.█...█...█...█...█..=
 - ggg: =In short, there is a success story.█.e.█Ual.█.ate.█.ack.█.etk.█.=
-
-123: failed to translate "Bauingenieur"
-- cgg: =I am antuied by bonstructing futbarewfffect fn toutiri.bf bur.et=
-- ggg: =I am fnerert from Bauingening.█ af Bark..n.█.an tn tans.tensess█=
 
 ** funny examples
 
