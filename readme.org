@@ -2,7 +2,7 @@
 
 - [[docs/doc.org][documentation]]
 - [[docs/slides_20190213.pdf][slides]]
-- papers
+- [[docs/paper_kuan/paper.pdf][paper (kuan)]]
 
 * quick start
 
